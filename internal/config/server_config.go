@@ -6,6 +6,7 @@ import (
 	"os"
 )
 
+// ServerConfig represents server configuration
 type ServerConfig struct {
 	ServerAddress string
 	DSN           string
@@ -13,6 +14,8 @@ type ServerConfig struct {
 
 const serverAddressDefault = "localhost:443"
 
+// GetServerConfig parses runtime flags and
+// enviroment variables and returns ServierConfig instanse
 func GetServerConfig(args []string) ServerConfig {
 	var config ServerConfig
 	var addressF, DSNf string

@@ -2,11 +2,13 @@ package config
 
 import "os"
 
+// ClientConfig represents client configuration
 type ClientConfig struct {
-	ServerAddress string `json:"address,omitempty"`
+	ServerAddress string
 }
 
-// GetClientConfig rep
+// GetClientConfig parses env variables and
+// returns ClientConfig instance
 func GetClientConfig() ClientConfig {
 	var config ClientConfig
 
