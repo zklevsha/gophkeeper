@@ -2,12 +2,13 @@ package config
 
 import "os"
 
-type AgentConfig struct {
+type ClientConfig struct {
 	ServerAddress string `json:"address,omitempty"`
 }
 
-func GetAgentConfig() AgentConfig {
-	var config AgentConfig
+// GetClientConfig rep
+func GetClientConfig() ClientConfig {
+	var config ClientConfig
 
 	addressEnv := os.Getenv("GK_SERVER_ADDRESS")
 	if addressEnv != "" {

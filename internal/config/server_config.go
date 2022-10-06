@@ -2,6 +2,7 @@ package config
 
 import (
 	"flag"
+	"log"
 	"os"
 )
 
@@ -18,7 +19,11 @@ func GetServerConfig(args []string) ServerConfig {
 	f := flag.NewFlagSet("server", flag.ExitOnError)
 	f.StringVar(&addressF, "a", serverAddressDefault, "server address")
 	f.StringVar(&DSNf, "d", "", "database connection string (postgres://username:password@localhost:5432/database_name)")
-	f.Parse(args)
+	err := f.Parse(args)
+	if err != nil {
+		log.Fatalf("failed to parse flag parameters: %s",
+			err.Error())
+	}
 
 	addressEnv := os.Getenv("GK_SERVER_ADDRESS")
 	DSNenv := os.Getenv("GK_DB_DSN")

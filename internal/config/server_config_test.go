@@ -21,7 +21,7 @@ func TestServerConfig(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			res := GetServerConfig(tc.args)
 			if res != tc.want {
-				t.Errorf("AgentConfig mismatch: have: %v,  want: %v", res, tc.want)
+				t.Errorf("ClientConfig mismatch: have: %v,  want: %v", res, tc.want)
 			}
 		})
 	}
