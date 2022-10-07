@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"errors"
 	"log"
 	"testing"
 
@@ -11,31 +12,6 @@ import (
 const dsn = "postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper_test"
 
 var ctx = context.Background()
-
-// func tableExists(tname string, d Connector) (bool, error) {
-// 	conn, err := d.Pool.Acquire(d.Ctx)
-// 	if err != nil {
-// 		return false, fmt.Errorf("failed to acquire connection: %s", err.Error())
-// 	}
-// 	defer conn.Release()
-
-// 	var count int
-// 	sql := `SELECT COUNT(table_name) FROM information_schema.tables WHERE table_name=$1;`
-// 	row := conn.QueryRow(d.Ctx, sql, tname)
-// 	err = row.Scan(&count)
-// 	if err != nil {
-// 		return false, fmt.Errorf("sql %s have returned an error: %s", sql, err.Error())
-// 	}
-
-// 	switch count {
-// 	case 0:
-// 		return false, nil
-// 	case 1:
-// 		return true, nil
-// 	default:
-// 		return false, fmt.Errorf("sql %s have returned more than 1 COUNT: %d", sql, count)
-// 	}
-// }
 
 func setUp() Connector {
 	d := Connector{Ctx: ctx, DSN: dsn}
@@ -88,4 +64,32 @@ func TestRegister(t *testing.T) {
 		}
 	})
 
+}
+
+func TestGetUser(t *testing.T) {
+	// setup
+	d := setUp()
+	defer d.Close()
+	defer tearDown(d)
+
+	// Get user that exists
+	want := structs.User{Email: "vasya@test.ru", Password: "secret"}
+	id, err := d.Register(want)
+	if err != nil {
+		t.Fatalf("cant register new user: %s", err.Error())
+	}
+	want.Id = id
+	have, err := d.GetUser(id)
+	if err != nil {
+		t.Fatalf("cant get user: %s", err.Error())
+	}
+	if want != have {
+		t.Errorf("user mismatch: have: %v want: %v", have, want)
+	}
+
+	// Get user that does`t exists
+	_, err = d.GetUser(1004932)
+	if !errors.Is(err, structs.ErrUserAuth) {
+		t.Errorf("err != structs.ErrUserAuth: %v", err)
+	}
 }

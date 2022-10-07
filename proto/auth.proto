@@ -16,7 +16,11 @@ message Response {
 message RegisterRequest {User user = 1;}
 message RegisterResponse {Response response = 1;}
 
+message GetTokenRequest {User user = 1 ;}
+message GetTokenResponse {Response response = 1;}
+
 service Auth {
   rpc Register(RegisterRequest) returns (RegisterResponse) {}
+  rpc GetToken(GetTokenRequest) returns (GetTokenResponse) {}
 }
 

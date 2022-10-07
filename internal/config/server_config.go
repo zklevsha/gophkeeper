@@ -10,6 +10,7 @@ import (
 type ServerConfig struct {
 	ServerAddress string
 	DSN           string
+	Key           string
 }
 
 const serverAddressDefault = "localhost:443"
@@ -18,10 +19,11 @@ const serverAddressDefault = "localhost:443"
 // enviroment variables and returns ServierConfig instanse
 func GetServerConfig(args []string) ServerConfig {
 	var config ServerConfig
-	var addressF, DSNf string
+	var addressF, DSNf, keyF string
 	f := flag.NewFlagSet("server", flag.ExitOnError)
 	f.StringVar(&addressF, "a", serverAddressDefault, "server address")
 	f.StringVar(&DSNf, "d", "", "database connection string (postgres://username:password@localhost:5432/database_name)")
+	f.StringVar(&keyF, "k", "", "server key to sign JWT tokens with")
 	err := f.Parse(args)
 	if err != nil {
 		log.Fatalf("failed to parse flag parameters: %s",
@@ -30,6 +32,7 @@ func GetServerConfig(args []string) ServerConfig {
 
 	addressEnv := os.Getenv("GK_SERVER_ADDRESS")
 	DSNenv := os.Getenv("GK_DB_DSN")
+	keyEnv := os.Getenv("GK_KEY")
 
 	// address
 	if addressEnv != "" {
@@ -44,5 +47,19 @@ func GetServerConfig(args []string) ServerConfig {
 	} else {
 		config.DSN = DSNf
 	}
+	if config.DSN == "" {
+		log.Fatalf("DSN is not set")
+	}
+
+	// KEY
+	if keyEnv != "" {
+		config.Key = keyEnv
+	} else {
+		config.Key = keyF
+	}
+	if config.Key == "" {
+		log.Fatal("KEY is not set")
+	}
+
 	return config
 }

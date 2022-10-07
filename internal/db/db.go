@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
@@ -91,7 +92,7 @@ func (d *Connector) CreateTables() error {
 	usersSQL := `CREATE TABLE IF NOT EXISTS users (
 		id serial PRIMARY KEY,
 		email VARCHAR(50) UNIQUE NOT NULL,
-		password BYTEA NOT NULL);`
+		password VARCHAR(100) NOT NULL);;`
 
 	_, err = conn.Exec(d.Ctx, usersSQL)
 	if err != nil {
@@ -117,4 +118,40 @@ func (d *Connector) DropTables() error {
 	}
 
 	return nil
+}
+
+// GetUser returns user info from database
+func (d *Connector) GetUser(id int) (structs.User, error) {
+	conn, err := d.Pool.Acquire(d.Ctx)
+	defer conn.Release()
+	if err != nil {
+		return structs.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+
+	var user structs.User
+	usersSQL := `SELECT id, email, password FROM users WHERE id=$1`
+	row := conn.QueryRow(d.Ctx, usersSQL, id)
+
+	switch err := row.Scan(&user.Id, &user.Email, &user.Password); err {
+	case pgx.ErrNoRows:
+		return structs.User{}, structs.ErrUserAuth
+	case nil:
+		return user, nil
+	default:
+		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
+		return structs.User{}, e
+	}
+
+	// row := conn.QueryRow(d.Ctx, sql, creds.Login)
+
+	// switch err := row.Scan(&id, &password); err {
+	// case pgx.ErrNoRows:
+	// 	return -1, structs.ErrUserAuth
+	// case nil:
+	// 	return id, nil
+	// default:
+	// 	e := fmt.Errorf("unknown error while authenticating user: %s", err.Error())
+	// 	return -1, e
+	// }
+
 }

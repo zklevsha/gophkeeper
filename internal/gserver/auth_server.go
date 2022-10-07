@@ -7,11 +7,13 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/db"
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type authServer struct {
 	pb.UnimplementedAuthServer
-	db db.Connector
+	db  db.Connector
+	key string
 }
 
 // Register register user it the system
@@ -21,7 +23,15 @@ func (s *authServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 		response := pb.Response{Message: "", Error: "user is not set"}
 		return &pb.RegisterResponse{Response: &response}, nil
 	}
-	user := structs.User{Email: in.User.Email, Password: in.User.Password}
+
+	encPass, err := bcrypt.GenerateFromPassword([]byte(in.User.Password), 14)
+	if err != nil {
+		e := fmt.Sprintf("failed to generate hash: %s", err.Error())
+		response := pb.Response{Message: "", Error: e}
+		return &pb.RegisterResponse{Response: &response}, nil
+	}
+
+	user := structs.User{Email: in.User.Email, Password: string(encPass)}
 
 	id, err := s.db.Register(user)
 	if err != nil {
