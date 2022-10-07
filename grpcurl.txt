@@ -1,0 +1,8 @@
+# list services
+grpcurl -plaintext localhost:10443 list
+
+
+# register user
+grpcurl -plaintext -d '{"user":{"email": "kirill@test.ru", "password": "password"}}' \
+    localhost:10443 Auth/Register
+
