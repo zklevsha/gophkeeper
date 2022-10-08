@@ -19,8 +19,8 @@ func Generate(userid int, key string) (string, error) {
 	return tokenString, err
 }
 
-// GetUserID exstracts user id from JWT token
-func GetUserID(tokenString string, key string) (int, error) {
+// Validate checks JWT token and  extracts user id
+func Validate(tokenString string, key string) (int, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		// Don't forget to validate the alg is what you expect:
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
