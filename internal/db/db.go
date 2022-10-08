@@ -120,8 +120,8 @@ func (d *Connector) DropTables() error {
 	return nil
 }
 
-// GetUser returns user info from database
-func (d *Connector) GetUser(id int) (structs.User, error) {
+// GetUser search for user by email
+func (d *Connector) GetUser(email string) (structs.User, error) {
 	conn, err := d.Pool.Acquire(d.Ctx)
 	defer conn.Release()
 	if err != nil {
@@ -129,8 +129,8 @@ func (d *Connector) GetUser(id int) (structs.User, error) {
 	}
 
 	var user structs.User
-	usersSQL := `SELECT id, email, password FROM users WHERE id=$1`
-	row := conn.QueryRow(d.Ctx, usersSQL, id)
+	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
+	row := conn.QueryRow(d.Ctx, usersSQL, email)
 
 	switch err := row.Scan(&user.Id, &user.Email, &user.Password); err {
 	case pgx.ErrNoRows:
@@ -141,17 +141,4 @@ func (d *Connector) GetUser(id int) (structs.User, error) {
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
 		return structs.User{}, e
 	}
-
-	// row := conn.QueryRow(d.Ctx, sql, creds.Login)
-
-	// switch err := row.Scan(&id, &password); err {
-	// case pgx.ErrNoRows:
-	// 	return -1, structs.ErrUserAuth
-	// case nil:
-	// 	return id, nil
-	// default:
-	// 	e := fmt.Errorf("unknown error while authenticating user: %s", err.Error())
-	// 	return -1, e
-	// }
-
 }

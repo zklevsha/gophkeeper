@@ -79,7 +79,7 @@ func TestGetUser(t *testing.T) {
 		t.Fatalf("cant register new user: %s", err.Error())
 	}
 	want.Id = id
-	have, err := d.GetUser(id)
+	have, err := d.GetUser(want.Email)
 	if err != nil {
 		t.Fatalf("cant get user: %s", err.Error())
 	}
@@ -88,7 +88,7 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// Get user that does`t exists
-	_, err = d.GetUser(1004932)
+	_, err = d.GetUser("john")
 	if !errors.Is(err, structs.ErrUserAuth) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
