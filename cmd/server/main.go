@@ -26,7 +26,8 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to initialize db.Connector: %s", err.Error())
 	}
-	gserver := gserver.GetServer(db, config.Key)
+	gserver := gserver.GetServer(db, config.Key, config.CertPath,
+		config.PrivateKeyPath)
 
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
