@@ -6,6 +6,10 @@ grpcurl -plaintext localhost:10443 list
 grpcurl -plaintext -d '{"user":{"email": "kirill@test.ru", "password": "password"}}' \
     localhost:10443 Auth/Register
 
-# get
+# get token
 grpcurl -plaintext -d '{"user":{"email": "kirill@test.ru", "password": "password"}}' \
+    localhost:10443 Auth/GetToken
+
+# get token tls
+grpcurl -insecure -d '{"user":{"email": "kirill@test.ru", "password": "password"}}' \
     localhost:10443 Auth/GetToken
