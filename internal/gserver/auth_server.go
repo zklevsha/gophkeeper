@@ -81,6 +81,6 @@ func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.
 		response := pb.Response{Message: "", Error: e}
 		return &pb.GetTokenResponse{Response: &response}, nil
 	}
-	response := pb.Response{Message: token, Error: ""}
+	response := pb.Response{Message: token.Token, Error: ""}
 	return &pb.GetTokenResponse{Response: &response}, nil
 }
