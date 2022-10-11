@@ -45,7 +45,7 @@ func (d *Connector) Close() {
 }
 
 // Register adds user to database and returns new user`s id
-func (d *Connector) Register(user structs.User) (int, error) {
+func (d *Connector) Register(user structs.User) (int64, error) {
 	err := d.checkInit()
 	if err != nil {
 		return -1, err
@@ -69,7 +69,7 @@ func (d *Connector) Register(user structs.User) (int, error) {
 	}
 
 	// adding new user
-	var id int
+	var id int64
 	sql = `INSERT INTO users (email, password)
 		   VALUES($1, $2)
 		   RETURNING id;`
