@@ -8,3 +8,9 @@ var ErrUserAlreadyExists = errors.New("user already exists")
 
 // ErrUserAuth returns when there are some authentication error
 var ErrUserAuth = errors.New("authentication failed")
+
+// ErrEmptyInput returns when client input is empty
+var ErrEmptyInput = errors.New("input is empty")
+
+// ErrInvalidEmail returns when we failed to parse input email
+var ErrInvalidEmail = errors.New("email is invalid")

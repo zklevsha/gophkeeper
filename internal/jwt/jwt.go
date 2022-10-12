@@ -12,7 +12,7 @@ import (
 func Generate(userid int64, key string) (structs.Jtoken, error) {
 	now := time.Now()
 	claims := structs.Claims{UserId: userid, Iat: now.Unix(),
-		Exp: now.Add(time.Minute * 5).Unix()}
+		Exp: now.Add(time.Minute * 60).Unix()}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"id":  claims.UserId,
 		"iat": claims.Iat,
