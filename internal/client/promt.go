@@ -2,6 +2,7 @@ package client
 
 import (
 	"fmt"
+	"log"
 	"os"
 
 	"github.com/manifoldco/promptui"
@@ -9,7 +10,19 @@ import (
 
 type fn func(string) error
 
-func promptGetInput(label string, validator fn, mask bool) string {
+func getYN(label string) string {
+	prompt := promptui.Select{
+		Label: label,
+		Items: []string{"Yes", "No"},
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed %v\n", err)
+	}
+	return result
+}
+
+func getInput(label string, validator fn, mask bool) string {
 
 	templates := &promptui.PromptTemplates{
 		Prompt:  "{{ . }} ",

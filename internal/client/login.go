@@ -11,8 +11,8 @@ import (
 
 func login(ctx context.Context, gclient structs.Gclient,
 	mstorage *structs.MemStorage) {
-	email := promptGetInput("email:", isEmail, false)
-	password := promptGetInput("password:", notEmpty, true)
+	email := getInput("email:", isEmail, false)
+	password := getInput("password:", notEmpty, true)
 
 	user := pb.User{Email: email, Password: password}
 	resp, err := gclient.Auth.GetToken(ctx, &pb.GetTokenRequest{User: &user})
@@ -28,8 +28,8 @@ func login(ctx context.Context, gclient structs.Gclient,
 }
 
 func register(ctx context.Context, gclient structs.Gclient) {
-	email := promptGetInput("email:", isEmail, false)
-	password := promptGetInput("password:", notEmpty, true)
+	email := getInput("email:", isEmail, false)
+	password := getInput("password:", notEmpty, true)
 
 	user := pb.User{Email: email, Password: password}
 	resp, err := gclient.Auth.Register(ctx, &pb.RegisterRequest{User: &user})

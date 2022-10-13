@@ -6,15 +6,18 @@ import (
 )
 
 var commands = map[string]string{
-	"register":  "create new user",
-	"login":     "login to server",
-	"help":      "list all available commands",
-	"exit/quit": "exit application",
+	"register":     "create new user",
+	"login":        "login to server",
+	"key-generate": "generate masterkey file",
+	"key-load":     "load masterkey from file to memory",
+	"key-print":    "get runtime masterkey information",
+	"help":         "list all available commands",
+	"exit/quit":    "exit application",
 }
 
 func help() {
 	fmt.Println("AVAILABLE COMMANDS:")
 	for cmd, desc := range commands {
-		log.Printf("%s %s", cmd, desc)
+		log.Printf("\t* %s - %s", cmd, desc)
 	}
 }

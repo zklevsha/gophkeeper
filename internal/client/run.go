@@ -16,19 +16,24 @@ func Run(gclient structs.Gclient) {
 	ctx := context.Background()
 	mstorage := structs.MemStorage{}
 	for {
-		command := promptGetInput("command: ", notEmpty, false)
-		fmt.Printf("mstorage: %v\n", mstorage)
+		command := getInput("command: ", notEmpty, false)
 		switch command {
 		case "register":
 			register(ctx, gclient)
 		case "login":
 			login(ctx, gclient, &mstorage)
+		case "key-generate":
+			keyGenerate(&mstorage)
+		case "key-load":
+			keyLoad("", &mstorage)
+		case "key-print":
+			keyPrint(&mstorage)
 		case "help":
 			help()
 		case "exit", "quit":
 			os.Exit(0)
 		default:
-			log.Printf("'%s' is not supported", command)
+			log.Printf("command '%s' is not supported", command)
 			help()
 		}
 
