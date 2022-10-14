@@ -60,7 +60,6 @@ func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.
 		var response pb.Response
 		if errors.Is(err, structs.ErrUserAuth) {
 			response = pb.Response{Message: "", Error: "authentication error"}
-			return &pb.GetTokenResponse{Response: &response}, nil
 		} else {
 			response = pb.Response{Message: "",
 				Error: fmt.Sprintf("db access errors: %s", err.Error())}
@@ -75,7 +74,7 @@ func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.
 	}
 
 	// generate JWT
-	token, err := jwt.Generate(user.Id, s.key)
+	token, err := jwt.Generate(user.ID, s.key)
 	if err != nil {
 		e := fmt.Sprintf("cant generate token: %s", err.Error())
 		response := pb.Response{Message: "", Error: e}

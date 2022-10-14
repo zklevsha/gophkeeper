@@ -132,7 +132,7 @@ func (d *Connector) GetUser(email string) (structs.User, error) {
 	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
 	row := conn.QueryRow(d.Ctx, usersSQL, email)
 
-	switch err := row.Scan(&user.Id, &user.Email, &user.Password); err {
+	switch err := row.Scan(&user.ID, &user.Email, &user.Password); err {
 	case pgx.ErrNoRows:
 		return structs.User{}, structs.ErrUserAuth
 	case nil:

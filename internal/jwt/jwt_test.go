@@ -9,9 +9,9 @@ func TestJWT(t *testing.T) {
 	// run tests
 	t.Run("Test generatation/validation of JWT token", func(t *testing.T) {
 		key := "verysecretkey"
-		var userId int64 = 12
+		var userID int64 = 12
 
-		token, err := Generate(userId, key)
+		token, err := Generate(userID, key)
 		if err != nil {
 			t.Fatalf("cant generate token: %s", err.Error())
 		}
@@ -21,8 +21,9 @@ func TestJWT(t *testing.T) {
 			t.Fatalf("Token validation was vailed: %s", err.Error())
 		}
 
-		if validatedToken.Claims.UserId != userId {
-			t.Errorf("UserId mismatch: have %d, want %d", validatedToken.Claims.UserId, userId)
+		if validatedToken.Claims.UserID != userID {
+			t.Errorf("UserId mismatch: have %d, want %d",
+				validatedToken.Claims.UserID, userID)
 		}
 
 	})

@@ -78,7 +78,7 @@ func TestGetUser(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant register new user: %s", err.Error())
 	}
-	want.Id = id
+	want.ID = id
 	have, err := d.GetUser(want.Email)
 	if err != nil {
 		t.Fatalf("cant get user: %s", err.Error())

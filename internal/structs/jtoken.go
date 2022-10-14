@@ -2,7 +2,7 @@ package structs
 
 // Claims represent JWT token claims
 type Claims struct {
-	UserId int64
+	UserID int64
 	Iat    int64
 	Exp    int64
 }

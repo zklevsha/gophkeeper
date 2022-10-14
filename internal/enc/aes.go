@@ -8,7 +8,7 @@ import (
 	"io"
 )
 
-// EncrtyptAES encrypts data using AES algoritm
+// EncryptAES encrypts data using AES algoritm
 func EncryptAES(plaintext []byte, key []byte) ([]byte, error) {
 	c, err := aes.NewCipher(key)
 	if err != nil {
@@ -28,7 +28,7 @@ func EncryptAES(plaintext []byte, key []byte) ([]byte, error) {
 	return gcm.Seal(nonce, nonce, plaintext, nil), nil
 }
 
-// Decrypt decrypts data using AES algoritm
+// DecryptAES decrypts data using AES algoritm
 func DecryptAES(ciphertext []byte, key []byte) ([]byte, error) {
 
 	c, err := aes.NewCipher(key)

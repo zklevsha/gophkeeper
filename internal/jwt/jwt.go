@@ -11,10 +11,10 @@ import (
 // Generate generates new JWT token
 func Generate(userid int64, key string) (structs.Jtoken, error) {
 	now := time.Now()
-	claims := structs.Claims{UserId: userid, Iat: now.Unix(),
+	claims := structs.Claims{UserID: userid, Iat: now.Unix(),
 		Exp: now.Add(time.Minute * 60).Unix()}
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"id":  claims.UserId,
+		"id":  claims.UserID,
 		"iat": claims.Iat,
 		"exp": claims.Exp,
 	})
@@ -34,13 +34,14 @@ func Validate(tokenString string, key string) (structs.Jtoken, error) {
 
 	if claimsMap, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
 		claims := structs.Claims{
-			UserId: int64(claimsMap["id"].(float64)),
+			UserID: int64(claimsMap["id"].(float64)),
 			Iat:    int64(claimsMap["iat"].(float64)),
 			Exp:    int64(claimsMap["exp"].(float64)),
 		}
 		jtoken := structs.Jtoken{Token: tokenString, Claims: claims}
 		return jtoken, nil
-	} else {
-		return structs.Jtoken{}, err
 	}
+
+	return structs.Jtoken{}, err
+
 }

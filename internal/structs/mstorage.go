@@ -6,10 +6,12 @@ type MemStorage struct {
 	MasterKey MasterKey
 }
 
+// SetToken sets/updates token
 func (m *MemStorage) SetToken(token string) {
 	m.Token = token
 }
 
+// SetMasterKey sets/updates MasterKey
 func (m *MemStorage) SetMasterKey(key string, keyPath string) {
 	m.MasterKey.Key = key
 	m.MasterKey.KeyPath = keyPath
