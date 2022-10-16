@@ -3,6 +3,8 @@ package db
 import (
 	"context"
 	"fmt"
+	"io/ioutil"
+	"strings"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -80,7 +82,7 @@ func (d *Connector) Register(user structs.User) (int64, error) {
 	return id, nil
 }
 
-// CreateTables creates all project tables.
+// CreateTables creates all project tables and populates it`s with data`
 // This function mainly used in tests
 func (d *Connector) CreateTables() error {
 	conn, err := d.Pool.Acquire(d.Ctx)
@@ -89,14 +91,26 @@ func (d *Connector) CreateTables() error {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 
-	usersSQL := `CREATE TABLE IF NOT EXISTS users (
-		id serial PRIMARY KEY,
-		email VARCHAR(50) UNIQUE NOT NULL,
-		password VARCHAR(100) NOT NULL);;`
-
-	_, err = conn.Exec(d.Ctx, usersSQL)
+	// Recreating schema
+	schemaPath := "../../sql/schema.sql"
+	schemaSQL, err := ioutil.ReadFile(schemaPath)
 	if err != nil {
-		return fmt.Errorf("cant create users table: %s", err.Error())
+		return fmt.Errorf("cant read schema.sql: %s", err.Error())
+	}
+	_, err = conn.Exec(d.Ctx, string(schemaSQL))
+	if err != nil {
+		return fmt.Errorf("cant create db schema: %s", err.Error())
+	}
+
+	// Inserting data
+	dataPath := "../../sql/data.sql"
+	dataSQL, err := ioutil.ReadFile(dataPath)
+	if err != nil {
+		return fmt.Errorf("cant read schema.sql: %s", err.Error())
+	}
+	_, err = conn.Exec(d.Ctx, string(dataSQL))
+	if err != nil {
+		return fmt.Errorf("cant create db schema: %s", err.Error())
 	}
 
 	return nil
@@ -111,10 +125,13 @@ func (d *Connector) DropTables() error {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 
-	usersSQL := "DROP TABLE IF EXISTS users"
-	_, err = conn.Exec(d.Ctx, usersSQL)
+	tables := []string{"users", "private_data", "private_type"}
+
+	dropSQL := fmt.Sprintf("DROP TABLE IF EXISTS %s",
+		strings.Join(tables, ","))
+	_, err = conn.Exec(d.Ctx, dropSQL)
 	if err != nil {
-		return fmt.Errorf("cant drop counters table: %s", err.Error())
+		return fmt.Errorf("cant drop tables: %s", err.Error())
 	}
 
 	return nil
