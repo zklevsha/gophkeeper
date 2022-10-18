@@ -13,3 +13,9 @@ lint:
 	errcheck ./... 
 	golint ./...
 
+db:
+	psql -U gophkeeper -d  gophkeeper  -f sql/schema.sql && \
+	psql -U gophkeeper -d  gophkeeper  -f sql/data.sql
+
+drop:
+	psql -U gophkeeper -d  gophkeeper  -f sql/drop.sql

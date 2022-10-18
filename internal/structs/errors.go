@@ -14,3 +14,6 @@ var ErrEmptyInput = errors.New("input is empty")
 
 // ErrInvalidEmail returns when we failed to parse input email
 var ErrInvalidEmail = errors.New("email is invalid")
+
+// KeyValueError returns when we cant parse key-value pairs
+var ErrKeyValue = errors.New("failed to parse input as json")

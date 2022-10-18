@@ -2,9 +2,9 @@ package db
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
-	"io/ioutil"
-	"strings"
+	"os"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -19,8 +19,8 @@ type Connector struct {
 	initialized bool
 }
 
-func (d *Connector) checkInit() error {
-	if !d.initialized {
+func (c *Connector) checkInit() error {
+	if !c.initialized {
 		err := fmt.Errorf("Connector is not initiliazed (run Connector.Init() to initilize)")
 		return err
 	}
@@ -39,21 +39,21 @@ func (d *Connector) Init() error {
 }
 
 // Close closes connection to DB
-func (d *Connector) Close() {
-	if d.initialized {
-		d.Pool.Close()
-		d.initialized = false
+func (c *Connector) Close() {
+	if c.initialized {
+		c.Pool.Close()
+		c.initialized = false
 	}
 }
 
 // Register adds user to database and returns new user`s id
-func (d *Connector) Register(user structs.User) (int64, error) {
-	err := d.checkInit()
+func (c *Connector) Register(user structs.User) (int64, error) {
+	err := c.checkInit()
 	if err != nil {
 		return -1, err
 	}
 
-	conn, err := d.Pool.Acquire(d.Ctx)
+	conn, err := c.Pool.Acquire(c.Ctx)
 	if err != nil {
 		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -62,7 +62,7 @@ func (d *Connector) Register(user structs.User) (int64, error) {
 	// Check if user don`t exists
 	var counter int
 	sql := `SELECT COUNT(id) FROM users WHERE email=$1;`
-	err = conn.QueryRow(d.Ctx, sql, user.Email).Scan(&counter)
+	err = conn.QueryRow(c.Ctx, sql, user.Email).Scan(&counter)
 	if err != nil {
 		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
@@ -75,7 +75,7 @@ func (d *Connector) Register(user structs.User) (int64, error) {
 	sql = `INSERT INTO users (email, password)
 		   VALUES($1, $2)
 		   RETURNING id;`
-	err = conn.QueryRow(d.Ctx, sql, user.Email, user.Password).Scan(&id)
+	err = conn.QueryRow(c.Ctx, sql, user.Email, user.Password).Scan(&id)
 	if err != nil {
 		return -1, fmt.Errorf("failed to create user id DB: %s", err.Error())
 	}
@@ -84,8 +84,8 @@ func (d *Connector) Register(user structs.User) (int64, error) {
 
 // CreateTables creates all project tables and populates it`s with data`
 // This function mainly used in tests
-func (d *Connector) CreateTables() error {
-	conn, err := d.Pool.Acquire(d.Ctx)
+func (c *Connector) CreateTables() error {
+	conn, err := c.Pool.Acquire(c.Ctx)
 	defer conn.Release()
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
@@ -93,22 +93,22 @@ func (d *Connector) CreateTables() error {
 
 	// Recreating schema
 	schemaPath := "../../sql/schema.sql"
-	schemaSQL, err := ioutil.ReadFile(schemaPath)
+	schemaSQL, err := os.ReadFile(schemaPath)
 	if err != nil {
 		return fmt.Errorf("cant read schema.sql: %s", err.Error())
 	}
-	_, err = conn.Exec(d.Ctx, string(schemaSQL))
+	_, err = conn.Exec(c.Ctx, string(schemaSQL))
 	if err != nil {
 		return fmt.Errorf("cant create db schema: %s", err.Error())
 	}
 
 	// Inserting data
 	dataPath := "../../sql/data.sql"
-	dataSQL, err := ioutil.ReadFile(dataPath)
+	dataSQL, err := os.ReadFile(dataPath)
 	if err != nil {
 		return fmt.Errorf("cant read schema.sql: %s", err.Error())
 	}
-	_, err = conn.Exec(d.Ctx, string(dataSQL))
+	_, err = conn.Exec(c.Ctx, string(dataSQL))
 	if err != nil {
 		return fmt.Errorf("cant create db schema: %s", err.Error())
 	}
@@ -118,28 +118,34 @@ func (d *Connector) CreateTables() error {
 
 // DropTables drops all project`s tables.
 // This function mainly used in tests.
-func (d *Connector) DropTables() error {
-	conn, err := d.Pool.Acquire(d.Ctx)
+func (c *Connector) DropTables() error {
+	conn, err := c.Pool.Acquire(c.Ctx)
 	defer conn.Release()
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 
-	tables := []string{"users", "private_data", "private_type"}
-
-	dropSQL := fmt.Sprintf("DROP TABLE IF EXISTS %s",
-		strings.Join(tables, ","))
-	_, err = conn.Exec(d.Ctx, dropSQL)
+	dropPath := "../../sql/drop.sql"
+	dropSQL, err := os.ReadFile(dropPath)
 	if err != nil {
-		return fmt.Errorf("cant drop tables: %s", err.Error())
+		return fmt.Errorf("cant read schema.sql: %s", err.Error())
+	}
+	_, err = conn.Exec(c.Ctx, string(dropSQL))
+	if err != nil {
+		return fmt.Errorf("cant create db schema: %s", err.Error())
 	}
 
 	return nil
 }
 
 // GetUser search for user by email
-func (d *Connector) GetUser(email string) (structs.User, error) {
-	conn, err := d.Pool.Acquire(d.Ctx)
+func (c *Connector) GetUser(email string) (structs.User, error) {
+	err := c.checkInit()
+	if err != nil {
+		return structs.User{}, err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
 	defer conn.Release()
 	if err != nil {
 		return structs.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
@@ -147,7 +153,7 @@ func (d *Connector) GetUser(email string) (structs.User, error) {
 
 	var user structs.User
 	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
-	row := conn.QueryRow(d.Ctx, usersSQL, email)
+	row := conn.QueryRow(c.Ctx, usersSQL, email)
 
 	switch err := row.Scan(&user.ID, &user.Email, &user.Password); err {
 	case pgx.ErrNoRows:
@@ -158,4 +164,39 @@ func (d *Connector) GetUser(email string) (structs.User, error) {
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
 		return structs.User{}, e
 	}
+}
+
+func (c *Connector) PrivateAdd(pname string, userID int64, ptype string,
+	keyHash [32]byte, pdata []byte) error {
+	err := c.checkInit()
+	if err != nil {
+		return err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
+	defer conn.Release()
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+
+	// get type id
+	var typeID int64
+	sql := `SELECT id FROM private_types WHERE name=$1;`
+	row := conn.QueryRow(c.Ctx, sql, ptype)
+	err = row.Scan(&typeID)
+	if err != nil {
+		return fmt.Errorf("cant get private_type id %s", err.Error())
+	}
+
+	// inserting data
+	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64) 
+			VALUES($1, $2, $3, $4, $5);`
+	pdataBase64 := base64.StdEncoding.EncodeToString([]byte(pdata))
+	keyHashBase64 := base64.StdEncoding.EncodeToString(keyHash[:])
+	_, err = conn.Exec(c.Ctx, sql, pname, userID, typeID, keyHashBase64, pdataBase64)
+	if err != nil {
+		return fmt.Errorf("failed to insert data to db: %s", err.Error())
+	}
+
+	return nil
 }

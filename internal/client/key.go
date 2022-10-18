@@ -3,29 +3,21 @@ package client
 import (
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"path"
 	"time"
 
+	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
-const charset = "abcdefghijklmnopqrstuvwxyz" +
-	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const keyLength = 32
 
 func kgenerate(kdir string) (string, error) {
-	var seededRand *rand.Rand = rand.New(
-		rand.NewSource(time.Now().UnixNano()))
-	b := make([]byte, keyLength)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
-	}
-
+	randomStr := helpers.GetRandomSrt(keyLength)
 	kname := fmt.Sprintf("gkeeper-%d", time.Now().UnixNano())
 	kpath := path.Join(kdir, kname)
-	err := os.WriteFile(kpath, b, 0600)
+	err := os.WriteFile(kpath, []byte(randomStr), 0600)
 	if err != nil {
 		return "", fmt.Errorf("cant create key file %s: %s", kname, err.Error())
 	}
