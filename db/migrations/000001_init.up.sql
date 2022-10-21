@@ -7,6 +7,10 @@ CREATE TABLE IF NOT EXISTS private_types (
 		id serial PRIMARY KEY, 
 		name VARCHAR(50) UNIQUE NOT NULL);
 
+INSERT INTO private_types (name) 
+VALUES ('upass')
+ON CONFLICT DO NOTHING;
+
 CREATE TABLE IF NOT EXISTS private_data (
 	id serial PRIMARY KEY,
 	name VARCHAR(50) NOT NULL,

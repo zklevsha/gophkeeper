@@ -4,17 +4,38 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"testing"
 
+	"github.com/golang-migrate/migrate/v4"
+	_ "github.com/golang-migrate/migrate/v4/database/postgres"
+	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/zklevsha/gophkeeper/internal/enc"
 	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
-const dsn = "postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper_test"
+const dsn = "postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper_test?sslmode=disable"
+const migrationsFolder = "file://../../db/migrations"
 
 var ctx = context.Background()
+
+func runMigrations(direction string) error {
+	migrate, err := migrate.New(migrationsFolder, dsn)
+	if err != nil {
+		return fmt.Errorf("cannot init migrate object: %s", err.Error())
+	}
+	defer migrate.Close()
+	switch direction {
+	case "up":
+		return migrate.Up()
+	case "down":
+		return migrate.Down()
+	default:
+		return fmt.Errorf("bad direction parameter: %s (only up/down are supported)", direction)
+	}
+}
 
 func setUp() Connector {
 	c := Connector{Ctx: ctx, DSN: dsn}
@@ -22,17 +43,19 @@ func setUp() Connector {
 	if err != nil {
 		log.Fatalf("Failed to init Connector: %s", err.Error())
 	}
-	err = c.CreateTables()
+
+	// running migrations
+	err = runMigrations("up")
 	if err != nil {
-		log.Fatalf("Cant create tables: %s", err.Error())
+		log.Fatalf("cannot run up migrations: %s", err.Error())
 	}
 	return c
 }
 
 func tearDown(c Connector) {
-	err := c.DropTables()
+	err := runMigrations("down")
 	if err != nil {
-		log.Fatalf("DropTables have returned ad error: %s", err.Error())
+		log.Fatalf("cannot run down migrations: %s", err.Error())
 	}
 }
 

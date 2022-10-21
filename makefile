@@ -19,3 +19,14 @@ db:
 
 drop:
 	psql -U gophkeeper -d  gophkeeper  -f sql/drop.sql
+
+# dont forget to set env variable
+# export POSTGRESQL_URL='postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable'
+new_migration:
+	migrate create -ext sql -dir db/migrations -seq $(name)
+
+migrate_up:
+	migrate -database ${POSTGRESQL_URL} -path db/migrations up
+
+migrate_down:
+	migrate -database ${POSTGRESQL_URL} -path db/migrations down
