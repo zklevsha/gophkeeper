@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
@@ -47,4 +48,13 @@ func getInput(label string, validator fn, mask bool) string {
 		os.Exit(1)
 	}
 	return result
+}
+
+func getTags(input string) (map[string]string, error) {
+	var t map[string]string
+	err := json.Unmarshal([]byte(input), &t)
+	if err != nil {
+		return t, fmt.Errorf("cant parse tags: %s", err.Error())
+	}
+	return t, nil
 }

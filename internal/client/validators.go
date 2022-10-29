@@ -6,6 +6,10 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
+func any(input string) error {
+	return nil
+}
+
 func notEmpty(input string) error {
 	if len(input) <= 0 {
 		return structs.ErrEmptyInput

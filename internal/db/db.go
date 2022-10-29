@@ -200,3 +200,30 @@ func (c *Connector) PrivateAdd(pname string, userID int64, ptype string,
 
 	return nil
 }
+
+// SELECT a.name, b.name, a.khash_base64, a.data_base64
+// FROM private_data AS a
+// INNER JOIN private_types AS b
+// ON a.type_id=b.id;
+
+// CREATE TABLE IF NOT EXISTS private_types (
+// 	id serial PRIMARY KEY,
+// 	name VARCHAR(50) UNIQUE NOT NULL);
+
+// CREATE TABLE IF NOT EXISTS private_data (
+// id serial PRIMARY KEY,
+// name VARCHAR(50) NOT NULL,
+// user_id integer REFERENCES users (id),
+// type_id integer REFERENCES private_types(id),
+// khash_base64 TEXT,
+// data_base64 TEXT,
+// UNIQUE (id, name));
+
+// func (c *Connector) PrivateGet(pname string, userID int64) (structs.Pdata, error) {
+// 	sql := `SELECT a.name, b.name, a.khash_base64, a.data_base64
+// 			FROM private_data AS a
+// 			WHERE a.user_id=$1 AND a.name=$2
+// 			INNER JOIN private_types AS b
+// 			ON a.type_id=b.id;`
+
+// }

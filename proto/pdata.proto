@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+import "common.proto";
+
+message Pdata {
+  string token = 1;
+  bytes pdata = 2;
+  string ptype = 3;
+  bytes keyHash = 4;
+}
+
+message AddPdataRequest {Pdata pdata = 1;}
+message AddPdataResponse {Response response = 1;}
+
+service PrivateData {
+  rpc AddPdata(AddPdataRequest) returns (AddPdataResponse) {}
+}
+
