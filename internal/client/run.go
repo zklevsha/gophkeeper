@@ -10,24 +10,23 @@ import (
 )
 
 // Run starts client interactive promt
-func Run(gclient structs.Gclient) {
+func Run(gclient structs.Gclient, mstorage *structs.MemStorage) {
 	fmt.Println("Welcome to gophkeeper")
 	fmt.Println("Enter 'help' to get list of available commands")
 	ctx := context.Background()
-	mstorage := structs.MemStorage{}
 	for {
 		command := getInput("command: ", notEmpty, false)
 		switch command {
 		case "register":
 			register(ctx, gclient)
 		case "login":
-			login(ctx, gclient, &mstorage)
+			login(ctx, gclient, mstorage)
 		case "key-generate":
-			keyGenerate(&mstorage)
+			keyGenerate(mstorage)
 		case "key-load":
-			keyLoad("", &mstorage)
+			keyLoad("", mstorage)
 		case "key-print":
-			keyPrint(&mstorage)
+			keyPrint(mstorage)
 		case "help":
 			help()
 		case "exit", "quit":

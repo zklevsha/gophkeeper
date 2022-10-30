@@ -6,9 +6,10 @@ import "common.proto";
 
 message Pdata {
   string token = 1;
-  bytes pdata = 2;
+  string pname = 2;
   string ptype = 3;
-  bytes keyHash = 4;
+  bytes pdata = 4;
+  bytes keyHash = 5;
 }
 
 message AddPdataRequest {Pdata pdata = 1;}

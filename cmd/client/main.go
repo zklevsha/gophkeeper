@@ -17,13 +17,16 @@ func main() {
 	// removing timestamps from the output
 	log.SetFlags(0)
 
-	clientConfig := config.GetClientConfig(os.Args[1:])
+	mstorage := structs.MemStorage{}
 
+	clientConfig := config.GetClientConfig(os.Args[1:])
 	// initiating connection to server
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: true,
 	}
-	conn, err := grpc.Dial(clientConfig.ServerAddress, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)))
+	conn, err := grpc.Dial(clientConfig.ServerAddress,
+		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+		client.GetUnaryClientInterceptor(&mstorage))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -34,7 +37,6 @@ func main() {
 		}
 	}()
 	gclient := structs.Gclient{Auth: pb.NewAuthClient(conn)}
-
 	// starting interactive loop
-	client.Run(gclient)
+	client.Run(gclient, &mstorage)
 }
