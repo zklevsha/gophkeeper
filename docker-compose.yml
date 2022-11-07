@@ -1,0 +1,22 @@
+version: "3.9"
+
+services:
+  db:
+    container_name: db
+    image: postgres:14.2
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=gophkeeper
+      - POSTGRES_USER=gophkeeper
+      - POSTGRES_DB=gophkeeper
+
+  db_test:
+    container_name: db_test
+    image: postgres:14.2
+    ports:
+      - "5532:5432"
+    environment:
+      - POSTGRES_PASSWORD=gophkeeper
+      - POSTGRES_USER=gophkeeper
+      - POSTGRES_DB=gophkeeper_test

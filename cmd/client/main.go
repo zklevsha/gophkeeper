@@ -7,7 +7,6 @@ import (
 
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/config"
-	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -26,7 +25,7 @@ func main() {
 	}
 	conn, err := grpc.Dial(clientConfig.ServerAddress,
 		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-		client.GetUnaryClientInterceptor(&mstorage))
+		grpc.WithUnaryInterceptor(client.GetUnaryClientInterceptor(&mstorage)))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
@@ -36,7 +35,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	gclient := structs.Gclient{Auth: pb.NewAuthClient(conn)}
+	gclient := structs.NewGclient(conn)
 	// starting interactive loop
-	client.Run(gclient, &mstorage)
+	client.Run(&gclient, &mstorage)
 }

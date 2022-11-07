@@ -5,11 +5,10 @@ option go_package = "./pb";
 import "common.proto";
 
 message Pdata {
-  string token = 1;
-  string pname = 2;
-  string ptype = 3;
-  bytes pdata = 4;
-  bytes keyHash = 5;
+  string pname = 1;
+  string ptype = 2;
+  bytes pdata = 3;
+  bytes keyHash = 4;
 }
 
 message AddPdataRequest {Pdata pdata = 1;}

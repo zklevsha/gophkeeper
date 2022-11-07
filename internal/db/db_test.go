@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,7 +17,7 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
-const dsn = "postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper_test?sslmode=disable"
+const dsn = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
 const migrationsFolder = "file://../../db/migrations"
 
 var ctx = context.Background()
@@ -125,7 +126,7 @@ func TestAddPrivate(t *testing.T) {
 	c := setUp()
 	defer c.Close()
 	defer tearDown(c)
-	userId, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -148,15 +149,20 @@ func TestAddPrivate(t *testing.T) {
 	// TestCases
 	tt := []struct {
 		name  string
-		ptype string
-		pdata []byte
+		pdata structs.Pdata
 	}{
-		{name: "Test UPass", ptype: "upass", pdata: upassEnc},
+		{name: "Test UPass",
+			pdata: structs.Pdata{
+				Name:        "test_upass",
+				Type:        "upass",
+				KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
+				PrivateData: base64.StdEncoding.EncodeToString(upassEnc)},
+		},
 	}
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			err := c.PrivateAdd(tc.name, userId, tc.ptype, masterKey.KeyHash, tc.pdata)
+			err := c.PrivateAdd(userID, tc.pdata)
 			if err != nil {
 				t.Errorf(err.Error())
 			}

@@ -2,7 +2,6 @@ package db
 
 import (
 	"context"
-	"encoding/base64"
 	"fmt"
 	"os"
 
@@ -166,8 +165,8 @@ func (c *Connector) GetUser(email string) (structs.User, error) {
 	}
 }
 
-func (c *Connector) PrivateAdd(pname string, userID int64, ptype string,
-	keyHash [32]byte, pdata []byte) error {
+// PrivateAdd addes private data in database for specific userID
+func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 	err := c.checkInit()
 	if err != nil {
 		return err
@@ -182,7 +181,7 @@ func (c *Connector) PrivateAdd(pname string, userID int64, ptype string,
 	// get type id
 	var typeID int64
 	sql := `SELECT id FROM private_types WHERE name=$1;`
-	row := conn.QueryRow(c.Ctx, sql, ptype)
+	row := conn.QueryRow(c.Ctx, sql, pdata.Type)
 	err = row.Scan(&typeID)
 	if err != nil {
 		return fmt.Errorf("cant get private_type id %s", err.Error())
@@ -191,9 +190,8 @@ func (c *Connector) PrivateAdd(pname string, userID int64, ptype string,
 	// inserting data
 	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64) 
 			VALUES($1, $2, $3, $4, $5);`
-	pdataBase64 := base64.StdEncoding.EncodeToString([]byte(pdata))
-	keyHashBase64 := base64.StdEncoding.EncodeToString(keyHash[:])
-	_, err = conn.Exec(c.Ctx, sql, pname, userID, typeID, keyHashBase64, pdataBase64)
+	_, err = conn.Exec(c.Ctx, sql,
+		pdata.Name, userID, typeID, pdata.KeyHash, pdata.PrivateData)
 	if err != nil {
 		return fmt.Errorf("failed to insert data to db: %s", err.Error())
 	}

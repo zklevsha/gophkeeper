@@ -52,9 +52,11 @@ func getInput(label string, validator fn, mask bool) string {
 
 func getTags(input string) (map[string]string, error) {
 	var t map[string]string
-	err := json.Unmarshal([]byte(input), &t)
-	if err != nil {
-		return t, fmt.Errorf("cant parse tags: %s", err.Error())
+	if input != "" {
+		err := json.Unmarshal([]byte(input), &t)
+		if err != nil {
+			return t, fmt.Errorf("cant parse tags: %s", err.Error())
+		}
 	}
 	return t, nil
 }

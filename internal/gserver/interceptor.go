@@ -2,64 +2,62 @@ package gserver
 
 import (
 	"context"
+	"fmt"
 	"log"
-	"time"
 
+	"github.com/zklevsha/gophkeeper/internal/jmanager"
+	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 )
 
-// list of RPC that not required authorization
+// list of RPC that not require authorization
 var noAuth = map[string]bool{
 	"/Auth/Register": true,
 	"/Auth/GetToken": true,
 }
 
-// Authorization unary interceptor function to handle authorize per RPC call
-func serverInterceptor(ctx context.Context,
-	req interface{},
-	info *grpc.UnaryServerInfo,
-	handler grpc.UnaryHandler) (interface{}, error) {
-	start := time.Now()
+// GetUnaryServerInterceptor returns server unary Interceptor to authenticate and authorize unary RPC
+func GetUnaryServerInterceptor(jwtKey string) grpc.UnaryServerInterceptor {
+	return func(
+		ctx context.Context,
+		req interface{},
+		info *grpc.UnaryServerInfo,
+		handler grpc.UnaryHandler,
+	) (interface{}, error) {
+		log.Println("--> unary interceptor: ", info.FullMethod)
 
-	if !noAuth[info.FullMethod] {
-		if err := authorize(ctx); err != nil {
-			return nil, err
+		if noAuth[info.FullMethod] {
+			log.Println("---> unary interceptor: adding parsint access token")
+			token, err := parseJTW(ctx, jwtKey)
+			if err != nil {
+				return nil, err
+			}
+			ctx = metadata.AppendToOutgoingContext(ctx, "userid", fmt.Sprintf("%d", token.Claims.UserID))
 		}
+
+		return handler(ctx, req)
 	}
-
-	// Calls the handler
-	h, err := handler(ctx, req)
-
-	// Logging with grpclog (grpclog.LoggerV2)
-	log.Printf("Request - Method:%s\tDuration:%s\tError:%v\n",
-		info.FullMethod,
-		time.Since(start),
-		err)
-
-	return h, err
 }
 
-// authorize checks
-func authorize(ctx context.Context) error {
+// parseJWT  checks JWT and parse it
+func parseJTW(ctx context.Context, jwtKey string) (structs.Jtoken, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
+		return structs.Jtoken{}, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
 	}
 
 	authHeader, ok := md["authorization"]
 	if !ok {
-		return status.Errorf(codes.Unauthenticated, "Authorization token is not supplied")
+		return structs.Jtoken{}, status.Errorf(codes.Unauthenticated, "Authorization token is not supplied")
 	}
 
-	token := authHeader[0]
-	// validateToken function validates the token
-	err := validateToken(token)
+	token, err := jmanager.Validate(authHeader[0], jwtKey)
 
 	if err != nil {
-		return status.Errorf(codes.Unauthenticated, err.Error())
+		return structs.Jtoken{}, status.Errorf(codes.Unauthenticated, err.Error())
 	}
-	return nil
+	return token, nil
 }

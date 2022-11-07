@@ -45,6 +45,7 @@ func GetServer(db db.Connector, key string, certPath string, privatePath string)
 
 	reflection.Register(s)
 	pb.RegisterAuthServer(s, &authServer{db: db, key: key})
+	pb.RegisterPrivateDataServer(s, &pdataServer{db: db, key: key})
 	return s
 
 }

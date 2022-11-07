@@ -6,7 +6,7 @@ import (
 	"fmt"
 
 	"github.com/zklevsha/gophkeeper/internal/db"
-	"github.com/zklevsha/gophkeeper/internal/jwt"
+	"github.com/zklevsha/gophkeeper/internal/jmanager"
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 	"golang.org/x/crypto/bcrypt"
@@ -74,7 +74,7 @@ func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.
 	}
 
 	// generate JWT
-	token, err := jwt.Generate(user.ID, s.key)
+	token, err := jmanager.Generate(user.ID, s.key)
 	if err != nil {
 		e := fmt.Sprintf("cant generate token: %s", err.Error())
 		response := pb.Response{Message: "", Error: e}
