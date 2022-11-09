@@ -131,10 +131,10 @@ func TestAddPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
-
-	// setup for Upass
 	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
 	masterKey.SetHash()
+
+	// setup for Upass
 	upass := structs.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	upassBytes, err := json.Marshal(upass)
@@ -165,6 +165,64 @@ func TestAddPrivate(t *testing.T) {
 			err := c.PrivateAdd(userID, tc.pdata)
 			if err != nil {
 				t.Errorf(err.Error())
+			}
+		})
+	}
+}
+
+func TestGetPrivate(t *testing.T) {
+	// setup
+	c := setUp()
+	defer c.Close()
+	defer tearDown(c)
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey.SetHash()
+
+	// setup for Upass
+	upass := structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	upassBytes, err := json.Marshal(upass)
+	if err != nil {
+		t.Fatalf("cant marshall upass: %s", err.Error())
+	}
+	upassEnc, err := enc.EncryptAES(upassBytes, []byte(masterKey.Key))
+	if err != nil {
+		t.Fatalf("cant encrypt upass: %s", err.Error())
+	}
+	pdata := structs.Pdata{
+		Name:        "test_upass",
+		Type:        "upass",
+		KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
+		PrivateData: base64.StdEncoding.EncodeToString(upassEnc)}
+	err = c.PrivateAdd(userID, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// TestCases
+	tt := []struct {
+		name string
+		want structs.Pdata
+	}{
+		{
+			name: "Test UPass",
+			want: pdata,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have, err := c.PrivateGet(userID, tc.want.Type)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			if have != tc.want {
+				t.Errorf("pdata mismatch: want %v, have %v", tc.want, have)
 			}
 		})
 	}

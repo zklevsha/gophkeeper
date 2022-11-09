@@ -165,7 +165,7 @@ func (c *Connector) GetUser(email string) (structs.User, error) {
 	}
 }
 
-// PrivateAdd addes private data in database for specific userID
+// PrivateAdd adds private data in database for specific userID
 func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 	err := c.checkInit()
 	if err != nil {
@@ -199,29 +199,32 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 	return nil
 }
 
-// SELECT a.name, b.name, a.khash_base64, a.data_base64
-// FROM private_data AS a
-// INNER JOIN private_types AS b
-// ON a.type_id=b.id;
+// PrivateGet retrive private data from database
+func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error) {
 
-// CREATE TABLE IF NOT EXISTS private_types (
-// 	id serial PRIMARY KEY,
-// 	name VARCHAR(50) UNIQUE NOT NULL);
+	err := c.checkInit()
+	if err != nil {
+		return structs.Pdata{}, err
+	}
 
-// CREATE TABLE IF NOT EXISTS private_data (
-// id serial PRIMARY KEY,
-// name VARCHAR(50) NOT NULL,
-// user_id integer REFERENCES users (id),
-// type_id integer REFERENCES private_types(id),
-// khash_base64 TEXT,
-// data_base64 TEXT,
-// UNIQUE (id, name));
+	conn, err := c.Pool.Acquire(c.Ctx)
+	defer conn.Release()
+	if err != nil {
+		return structs.Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
 
-// func (c *Connector) PrivateGet(pname string, userID int64) (structs.Pdata, error) {
-// 	sql := `SELECT a.name, b.name, a.khash_base64, a.data_base64
-// 			FROM private_data AS a
-// 			WHERE a.user_id=$1 AND a.name=$2
-// 			INNER JOIN private_types AS b
-// 			ON a.type_id=b.id;`
+	sql := `SELECT a.name, b.name, a.khash_base64, a.data_base64
+			FROM private_data AS a
+			INNER JOIN private_types AS b
+			ON a.type_id=b.id
+			WHERE a.user_id=$1 AND b.name=$2;`
 
-// }
+	row := conn.QueryRow(c.Ctx, sql, userID, pname)
+	var pdata = structs.Pdata{}
+	fmt.Println(row)
+	err = row.Scan(&pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData)
+	if err != nil {
+		return structs.Pdata{}, fmt.Errorf("cant get pdata %s", err.Error())
+	}
+	return pdata, nil
+}
