@@ -2,7 +2,6 @@ package client
 
 import (
 	"context"
-	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
@@ -25,10 +24,7 @@ func GetUnaryClientInterceptor(mstorage *structs.MemStorage) grpc.UnaryClientInt
 		invoker grpc.UnaryInvoker,
 		opts ...grpc.CallOption,
 	) error {
-		log.Printf("--> unary interceptor: %s", method)
-
 		if !noAuth[method] {
-			log.Printf("--> unary interceptor: attaching token")
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", mstorage.Token)
 		}
 

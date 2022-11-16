@@ -103,9 +103,9 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 	// check if we using correct master key
 	if string(resp.Pdata.KeyHash) != string(mstorage.MasterKey.KeyHash) {
 		fmt.Println("ERROR: key hash mismatch")
-		fmt.Printf("hash of the key that used to encrypt pdata: %s\n",
-			string(resp.Pdata.KeyHash))
-		fmt.Printf("masterkey hash: %s\n", string(mstorage.MasterKey.KeyHash))
+		fmt.Printf("hash of the key that used to encrypt pdata: %v\n",
+			resp.Pdata.KeyHash)
+		fmt.Printf("masterkey hash: %v\n", mstorage.MasterKey.KeyHash)
 		return
 	}
 
@@ -124,6 +124,11 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 		fmt.Printf("ERROR cant decode upass JSON to struct: %s", err.Error())
 		return
 	}
+	upass_pretty, err := json.MarshalIndent(up, "", " ")
+	if err != nil {
+		fmt.Printf("ERROR cant encode upass JSON : %s", err.Error())
+	} else {
+		fmt.Println(string(upass_pretty))
+	}
 
-	fmt.Printf("%v\n", up)
 }
