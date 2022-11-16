@@ -29,6 +29,8 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			keyPrint(mstorage)
 		case "upass-add":
 			upassCreate(mstorage, ctx, gclient)
+		case "upass-get":
+			upassGet(mstorage, ctx, gclient)
 		case "help":
 			help()
 		case "exit", "quit":

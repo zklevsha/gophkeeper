@@ -217,7 +217,7 @@ func TestGetPrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			have, err := c.PrivateGet(userID, tc.want.Type)
+			have, err := c.PrivateGet(userID, tc.want.Name)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}

@@ -3,7 +3,6 @@ package gserver
 import (
 	"context"
 	"fmt"
-	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/jmanager"
 	"github.com/zklevsha/gophkeeper/internal/structs"
@@ -27,10 +26,8 @@ func GetUnaryServerInterceptor(jwtKey string) grpc.UnaryServerInterceptor {
 		info *grpc.UnaryServerInfo,
 		handler grpc.UnaryHandler,
 	) (interface{}, error) {
-		log.Println("--> unary interceptor: ", info.FullMethod)
 
 		if noAuth[info.FullMethod] {
-			log.Println("---> unary interceptor: adding parsint access token")
 			token, err := parseJTW(ctx, jwtKey)
 			if err != nil {
 				return nil, err
@@ -42,7 +39,7 @@ func GetUnaryServerInterceptor(jwtKey string) grpc.UnaryServerInterceptor {
 	}
 }
 
-// parseJWT  checks JWT and parse it
+// parseJWT  checks JWT and parses it
 func parseJTW(ctx context.Context, jwtKey string) (structs.Jtoken, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {

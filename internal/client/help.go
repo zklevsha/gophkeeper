@@ -12,6 +12,7 @@ var commands = map[string]string{
 	"key-load":     "load masterkey from file to memory",
 	"key-print":    "get runtime masterkey information",
 	"upass-add":    "generate user/password pair",
+	"upass-get":    "retrive user/password pair",
 	"help":         "list all available commands",
 	"exit":         "exit application",
 }

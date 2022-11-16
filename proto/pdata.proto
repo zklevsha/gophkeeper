@@ -2,8 +2,6 @@ syntax = "proto3";
 
 option go_package = "./pb";
 
-import "common.proto";
-
 message Pdata {
   string pname = 1;
   string ptype = 2;
@@ -11,10 +9,18 @@ message Pdata {
   bytes keyHash = 4;
 }
 
+message PdataName {
+  string pname = 1;
+}
+
 message AddPdataRequest {Pdata pdata = 1;}
-message AddPdataResponse {Response response = 1;}
+message AddPdataResponse {string response = 1;}
+message GetPdataRequest {string pname = 1;}
+message GetPdataResponse {Pdata pdata = 1;}
+
 
 service PrivateData {
   rpc AddPdata(AddPdataRequest) returns (AddPdataResponse) {}
+  rpc GetPdata(GetPdataRequest) returns (GetPdataResponse) {}
 }
 

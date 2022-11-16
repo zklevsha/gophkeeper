@@ -17,3 +17,15 @@ var ErrInvalidEmail = errors.New("email is invalid")
 
 // KeyValueError returns when we cant parse key-value pairs
 var ErrKeyValue = errors.New("failed to parse input as json")
+
+// ErrPdataNotFound returns when we cant find Pdata for user
+var ErrPdataNotFound = errors.New("pdata not found")
+
+// ErrPdataAlreatyEsists reutrns when Pdata already exists
+var ErrPdataAlreatyEsists = errors.New("pdata already exists")
+
+// ErrNoToken returns when JWT is not found in the request
+var ErrNoToken = errors.New("no JWT")
+
+// ErrInvalidToken returns when JWT token is invalid
+var ErrInvalidToken = errors.New("JWT is invalid")

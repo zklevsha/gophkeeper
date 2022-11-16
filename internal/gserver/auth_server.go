@@ -2,7 +2,6 @@ package gserver
 
 import (
 	"context"
-	"errors"
 	"fmt"
 
 	"github.com/zklevsha/gophkeeper/internal/db"
@@ -10,6 +9,8 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type authServer struct {
@@ -22,15 +23,13 @@ type authServer struct {
 func (s *authServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.RegisterResponse, error) {
 	// Decode
 	if in.User == nil {
-		response := pb.Response{Message: "", Error: "user is not set"}
-		return &pb.RegisterResponse{Response: &response}, nil
+		return nil, status.Errorf(codes.InvalidArgument, "user is not set")
 	}
 
 	encPass, err := bcrypt.GenerateFromPassword([]byte(in.User.Password), 14)
 	if err != nil {
 		e := fmt.Sprintf("failed to generate hash: %s", err.Error())
-		response := pb.Response{Message: "", Error: e}
-		return &pb.RegisterResponse{Response: &response}, nil
+		return nil, status.Errorf(codes.Internal, e)
 	}
 
 	user := structs.User{Email: in.User.Email, Password: string(encPass)}
@@ -38,48 +37,35 @@ func (s *authServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 	id, err := s.db.Register(user)
 	if err != nil {
 		e := fmt.Sprintf("failed to register user: %s", err.Error())
-		response := pb.Response{Message: "", Error: e}
-		return &pb.RegisterResponse{Response: &response}, nil
+		return nil, status.Errorf(getCode(err), e)
 	}
-	m := fmt.Sprintf("user %s (userid: %d) was created", user.Email, id)
-	response := pb.Response{Message: m, Error: ""}
-	return &pb.RegisterResponse{Response: &response}, nil
+	r := fmt.Sprintf("user %s (userid: %d) was created", user.Email, id)
+	return &pb.RegisterResponse{Response: r}, nil
 }
 
 // GetToken authenticates user and generates JWT token
 func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.GetTokenResponse, error) {
 	// Decode
 	if in.User == nil {
-		response := pb.Response{Message: "", Error: "user is not set"}
-		return &pb.GetTokenResponse{Response: &response}, nil
+		return nil, status.Errorf(codes.InvalidArgument, "user is not set")
 	}
 
 	// authenticate
 	user, err := s.db.GetUser(in.User.Email)
 	if err != nil {
-		var response pb.Response
-		if errors.Is(err, structs.ErrUserAuth) {
-			response = pb.Response{Message: "", Error: "authentication error"}
-		} else {
-			response = pb.Response{Message: "",
-				Error: fmt.Sprintf("db access errors: %s", err.Error())}
-		}
-		return &pb.GetTokenResponse{Response: &response}, nil
+		return nil, status.Errorf(getCode(err), err.Error())
 	}
 	err = bcrypt.CompareHashAndPassword(
 		[]byte(user.Password), []byte(in.User.Password))
 	if err != nil {
-		response := pb.Response{Message: "", Error: "authentication error"}
-		return &pb.GetTokenResponse{Response: &response}, nil
+		return nil, status.Errorf(codes.Unauthenticated, "authentication error")
 	}
 
 	// generate JWT
 	token, err := jmanager.Generate(user.ID, s.key)
 	if err != nil {
 		e := fmt.Sprintf("cant generate token: %s", err.Error())
-		response := pb.Response{Message: "", Error: e}
-		return &pb.GetTokenResponse{Response: &response}, nil
+		return nil, status.Errorf(codes.Internal, e)
 	}
-	response := pb.Response{Message: token.Token, Error: ""}
-	return &pb.GetTokenResponse{Response: &response}, nil
+	return &pb.GetTokenResponse{Token: token.Token}, nil
 }

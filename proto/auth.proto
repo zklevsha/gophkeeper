@@ -2,18 +2,16 @@ syntax = "proto3";
 
 option go_package = "./pb";
 
-import "common.proto";
-
 message User {
   string email = 1;
   string password = 2;
 }
 
 message RegisterRequest {User user = 1;}
-message RegisterResponse {Response response = 1;}
+message RegisterResponse {string response = 1;}
 
 message GetTokenRequest {User user = 1 ;}
-message GetTokenResponse {Response response = 1;}
+message GetTokenResponse {string token = 1;}
 
 service Auth {
   rpc Register(RegisterRequest) returns (RegisterResponse) {}

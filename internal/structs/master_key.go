@@ -9,13 +9,13 @@ import (
 type MasterKey struct {
 	Key     string
 	KeyPath string
-	KeyHash [32]byte
+	KeyHash []byte
 }
 
 // SetHash calculates key hash and stores it in KeyHash attribute
 func (m *MasterKey) SetHash() {
 	hash := sha256.Sum256([]byte(m.Key))
-	m.KeyHash = hash
+	m.KeyHash = hash[:]
 }
 
 // Str returns stirng representation of struct

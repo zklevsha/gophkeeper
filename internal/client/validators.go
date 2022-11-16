@@ -1,6 +1,7 @@
 package client
 
 import (
+	"encoding/json"
 	"net/mail"
 
 	"github.com/zklevsha/gophkeeper/internal/structs"
@@ -23,4 +24,13 @@ func isEmail(input string) error {
 		return structs.ErrInvalidEmail
 	}
 	return nil
+}
+
+func isTags(input string) error {
+	if input == "" {
+		return nil
+	}
+	var tags map[string]string
+	return json.Unmarshal([]byte(input), &tags)
+
 }

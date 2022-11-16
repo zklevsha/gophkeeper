@@ -180,11 +180,26 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 
 	// get type id
 	var typeID int64
-	sql := `SELECT id FROM private_types WHERE name=$1;`
+	sql := `SELECT id 
+		    FROM private_types 
+			WHERE name=$1;`
 	row := conn.QueryRow(c.Ctx, sql, pdata.Type)
 	err = row.Scan(&typeID)
 	if err != nil {
 		return fmt.Errorf("cant get private_type id %s", err.Error())
+	}
+
+	// Check if pdata don`t exists
+	var counter int
+	sql = `SELECT COUNT(id) 
+		   FROM private_data
+		   WHERE user_id=$1 AND name=$2;`
+	err = conn.QueryRow(c.Ctx, sql, userID, pdata.Name).Scan(&counter)
+	if err != nil {
+		return fmt.Errorf("failed to query users table: %s", err.Error())
+	}
+	if counter != 0 {
+		return structs.ErrPdataAlreatyEsists
 	}
 
 	// inserting data
@@ -217,14 +232,18 @@ func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error
 			FROM private_data AS a
 			INNER JOIN private_types AS b
 			ON a.type_id=b.id
-			WHERE a.user_id=$1 AND b.name=$2;`
+			WHERE a.user_id=$1 AND a.name=$2;`
 
 	row := conn.QueryRow(c.Ctx, sql, userID, pname)
 	var pdata = structs.Pdata{}
-	fmt.Println(row)
-	err = row.Scan(&pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData)
-	if err != nil {
-		return structs.Pdata{}, fmt.Errorf("cant get pdata %s", err.Error())
+
+	switch err = row.Scan(&pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData); err {
+	case pgx.ErrNoRows:
+		return structs.Pdata{}, structs.ErrPdataNotFound
+	case nil:
+		return pdata, nil
+	default:
+		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
+		return structs.Pdata{}, e
 	}
-	return pdata, nil
 }
