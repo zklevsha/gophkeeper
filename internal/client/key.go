@@ -1,8 +1,9 @@
+// key.go contains funtrions for generating and loading master key
+// those functions are used in interactive cli
 package client
 
 import (
 	"fmt"
-	"io/ioutil"
 	"log"
 	"os"
 	"path"
@@ -78,7 +79,7 @@ func keyPrint(mstorage *structs.MemStorage) {
 
 func listKeyDir(keydir string) ([]string, error) {
 	var files []string
-	fileInfo, err := ioutil.ReadDir(keydir)
+	fileInfo, err := os.ReadDir(keydir)
 	if err != nil {
 		return files, err
 	}
