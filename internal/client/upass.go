@@ -4,7 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
+	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/enc"
 	"github.com/zklevsha/gophkeeper/internal/helpers"
@@ -17,7 +17,7 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 
 	err := upassCreateGetCheck(mstorage)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return
 	}
 
@@ -32,7 +32,7 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	} else {
 		passwordTwo := getInput("confirm password:", notEmpty, false)
 		if passwordOne != passwordTwo {
-			fmt.Println("ERROR: password mismatch")
+			log.Println("ERROR: password mismatch")
 			return
 		}
 		password = passwordOne
@@ -40,7 +40,7 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 
 	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
 	if err != nil {
-		fmt.Printf("ERROR: cant parse tags: %s\n", err.Error())
+		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
 		return
 	}
 	upass := structs.UPass{Username: username, Password: password, Tags: tags}
@@ -48,14 +48,14 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	// encoding
 	upass_encoded, err := json.Marshal(upass)
 	if err != nil {
-		fmt.Printf("ERROR: cannot encode upass to JSON: %s\n", err.Error())
+		log.Printf("ERROR: cannot encode upass to JSON: %s\n", err.Error())
 		return
 	}
 
 	// encrypting
 	upass_encrypted, err := enc.EncryptAES(upass_encoded, []byte(mstorage.MasterKey.Key))
 	if err != nil {
-		fmt.Printf("ERROR: failed to encrypt upass: %s\n", err.Error())
+		log.Printf("ERROR: failed to encrypt upass: %s\n", err.Error())
 		return
 	}
 	// sending to pdata to server
@@ -66,10 +66,10 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		KeyHash: mstorage.MasterKey.KeyHash[:]}
 	resp, err := gclient.Pdata.AddPdata(ctx, &pb.AddPdataRequest{Pdata: &pdata})
 	if err != nil {
-		fmt.Printf("ERROR: cant send message to server: %s\n", err.Error())
+		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
 	}
-	fmt.Println(resp.Response)
+	log.Println(resp.Response)
 
 }
 
@@ -89,23 +89,23 @@ func upassCreateGetCheck(mstorage *structs.MemStorage) error {
 func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
 	err := upassCreateGetCheck(mstorage)
 	if err != nil {
-		fmt.Println(err.Error())
+		log.Println(err.Error())
 		return
 	}
 
 	pname := getInput("upass name:", notEmpty, false)
 	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
 	if err != nil {
-		fmt.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
+		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
 
 	// check if we using correct master key
 	if string(resp.Pdata.KeyHash) != string(mstorage.MasterKey.KeyHash) {
-		fmt.Println("ERROR: key hash mismatch")
-		fmt.Printf("hash of the key that used to encrypt pdata: %v\n",
+		log.Println("ERROR: key hash mismatch")
+		log.Printf("hash of the key that used to encrypt pdata: %v\n",
 			resp.Pdata.KeyHash)
-		fmt.Printf("masterkey hash: %v\n", mstorage.MasterKey.KeyHash)
+		log.Printf("masterkey hash: %v\n", mstorage.MasterKey.KeyHash)
 		return
 	}
 
@@ -113,7 +113,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 	upass_decrypted, err := enc.DecryptAES(resp.Pdata.Pdata,
 		[]byte(mstorage.MasterKey.Key))
 	if err != nil {
-		fmt.Printf("ERROR cant decrypt data: %s", err.Error())
+		log.Printf("ERROR cant decrypt data: %s\n", err.Error())
 		return
 	}
 
@@ -121,14 +121,14 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 	var up structs.UPass
 	err = json.Unmarshal(upass_decrypted, &up)
 	if err != nil {
-		fmt.Printf("ERROR cant decode upass JSON to struct: %s", err.Error())
+		log.Printf("ERROR cant decode upass JSON to struct: %s\n", err.Error())
 		return
 	}
 	upass_pretty, err := json.MarshalIndent(up, "", " ")
 	if err != nil {
-		fmt.Printf("ERROR cant encode upass JSON : %s", err.Error())
+		log.Printf("ERROR cant encode upass JSON : %s\n", err.Error())
 	} else {
-		fmt.Println(string(upass_pretty))
+		log.Println(string(upass_pretty))
 	}
 
 }

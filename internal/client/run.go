@@ -11,6 +11,7 @@ import (
 
 // Run starts client interactive promt
 func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
+
 	fmt.Println("Welcome to gophkeeper")
 	fmt.Println("Enter 'help' to get list of available commands")
 	ctx := context.Background()

@@ -2,9 +2,11 @@ package client
 
 import (
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
+	"path/filepath"
 	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
@@ -33,12 +35,7 @@ func kload(kpath string) (string, error) {
 }
 
 func keyGenerate(mstorage *structs.MemStorage) {
-	homeDir, err := os.UserHomeDir()
-	if err != nil {
-		log.Printf("failed to get HOME dir: %s", err.Error())
-		return
-	}
-	keyPath, err := kgenerate(homeDir)
+	keyPath, err := kgenerate(mstorage.MasterKeyDir)
 	if err != nil {
 		log.Printf("cant create key file: %s", err.Error())
 		return
@@ -51,11 +48,24 @@ func keyGenerate(mstorage *structs.MemStorage) {
 
 func keyLoad(kpath string, mstorage *structs.MemStorage) {
 	if kpath == "" {
-		kpath = getInput("keyFile path: ", notEmpty, false)
+		keys, err := listKeyDir(mstorage.MasterKeyDir)
+		if err != nil {
+			log.Printf("ERROR: cannot read keychain directory(%s): %s\n",
+				mstorage.MasterKeyDir, err.Error())
+			return
+		}
+		if len(keys) == 0 {
+			log.Printf("you dont have any keychain directory(%s)", mstorage.MasterKeyDir)
+			if getYN("Do you want to generate one?") == "Yes" {
+				keyGenerate(mstorage)
+			}
+			return
+		}
+		kpath = inputSelect("Select key to load: ", keys)
 	}
 	key, err := kload(kpath)
 	if err != nil {
-		log.Printf("cant load key: %s", err.Error())
+		log.Printf("ERROR: cant load key: %s\n", err.Error())
 		return
 	}
 	mstorage.SetMasterKey(key, kpath)
@@ -64,4 +74,21 @@ func keyLoad(kpath string, mstorage *structs.MemStorage) {
 
 func keyPrint(mstorage *structs.MemStorage) {
 	log.Println(mstorage.MasterKey.Str())
+}
+
+func listKeyDir(keydir string) ([]string, error) {
+	var files []string
+	fileInfo, err := ioutil.ReadDir(keydir)
+	if err != nil {
+		return files, err
+	}
+	for _, file := range fileInfo {
+		if !file.IsDir() {
+			fullPath := filepath.Join(keydir, file.Name())
+			files = append(files, fullPath)
+
+		}
+
+	}
+	return files, nil
 }

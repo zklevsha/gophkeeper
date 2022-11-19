@@ -2,8 +2,9 @@ package structs
 
 // MemStorage stores runtime state of client
 type MemStorage struct {
-	Token     string
-	MasterKey MasterKey
+	Token        string
+	MasterKey    MasterKey
+	MasterKeyDir string
 }
 
 // SetToken sets/updates token

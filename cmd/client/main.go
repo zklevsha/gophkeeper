@@ -4,6 +4,7 @@ import (
 	"crypto/tls"
 	"log"
 	"os"
+	"path"
 
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/config"
@@ -17,6 +18,7 @@ func main() {
 	log.SetFlags(0)
 
 	mstorage := structs.MemStorage{}
+	mstorage.MasterKeyDir = createKeyDir()
 
 	clientConfig := config.GetClientConfig(os.Args[1:])
 	// initiating connection to server
@@ -38,4 +40,18 @@ func main() {
 	gclient := structs.NewGclient(conn)
 	// starting interactive loop
 	client.Run(&gclient, &mstorage)
+}
+
+// createKeyDir creates MasterKeys directory (in needed) and returns its path
+func createKeyDir() string {
+	user_home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("cant get user home directory: %s", err.Error())
+	}
+	kpath := path.Join(user_home, ".gk-keychain")
+	err = os.MkdirAll(kpath, 0700)
+	if err != nil {
+		log.Fatalf("cant create keychain directory(%s): %s", kpath, err.Error())
+	}
+	return kpath
 }

@@ -23,6 +23,18 @@ func getYN(label string) string {
 	return result
 }
 
+func inputSelect(label string, items []string) string {
+	prompt := promptui.Select{
+		Label: label,
+		Items: items,
+	}
+	_, result, err := prompt.Run()
+	if err != nil {
+		log.Fatalf("Prompt failed %v\n", err)
+	}
+	return result
+}
+
 func getInput(label string, validator fn, mask bool) string {
 
 	templates := &promptui.PromptTemplates{
