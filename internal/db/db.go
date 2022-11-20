@@ -180,8 +180,8 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 
 	// get type id
 	var typeID int64
-	sql := `SELECT id 
-		    FROM private_types 
+	sql := `SELECT id
+		    FROM private_types
 			WHERE name=$1;`
 	row := conn.QueryRow(c.Ctx, sql, pdata.Type)
 	err = row.Scan(&typeID)
@@ -191,7 +191,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 
 	// Check if pdata don`t exists
 	var counter int
-	sql = `SELECT COUNT(id) 
+	sql = `SELECT COUNT(id)
 		   FROM private_data
 		   WHERE user_id=$1 AND name=$2;`
 	err = conn.QueryRow(c.Ctx, sql, userID, pdata.Name).Scan(&counter)
@@ -203,7 +203,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 	}
 
 	// inserting data
-	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64) 
+	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64)
 			VALUES($1, $2, $3, $4, $5);`
 	_, err = conn.Exec(c.Ctx, sql,
 		pdata.Name, userID, typeID, pdata.KeyHash, pdata.PrivateData)
@@ -246,4 +246,35 @@ func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
 		return structs.Pdata{}, e
 	}
+}
+
+func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
+	err := c.checkInit()
+	if err != nil {
+		return err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
+	defer conn.Release()
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+
+	// inserting data
+	sql := `UPDATE private_data
+			SET khash_base64 = $1, data_base64 = $2
+			WHERE user_id = $3 and name = $4 `
+	res, err := conn.Exec(c.Ctx, sql, pdata.KeyHash,
+		pdata.PrivateData, userID, pdata.Name)
+	if err != nil {
+		return fmt.Errorf("failed to insert data to db: %s", err.Error())
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		return structs.ErrPdataNotFound
+	}
+	if rowsAffected > 1 {
+		return fmt.Errorf("rows affected: %d", rowsAffected)
+	}
+	return nil
 }

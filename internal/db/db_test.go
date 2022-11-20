@@ -60,6 +60,26 @@ func tearDown(c Connector) {
 	}
 }
 
+func pdataConvert(ptype string, pname string, input interface{}) (structs.Pdata, error) {
+	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey.SetHash()
+
+	pdataBytes, err := json.Marshal(input)
+	if err != nil {
+		return structs.Pdata{}, fmt.Errorf("cant marshall upass: %s", err.Error())
+	}
+	upassEnc, err := enc.EncryptAES(pdataBytes, []byte(masterKey.Key))
+	if err != nil {
+		return structs.Pdata{}, fmt.Errorf("cant encrypt upass: %s", err.Error())
+	}
+	pdata := structs.Pdata{
+		Name:        pname,
+		Type:        ptype,
+		KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
+		PrivateData: base64.StdEncoding.EncodeToString(upassEnc)}
+	return pdata, nil
+}
+
 func TestRegister(t *testing.T) {
 	// setup
 	c := setUp()
@@ -137,13 +157,9 @@ func TestAddPrivate(t *testing.T) {
 	// setup for Upass
 	upass := structs.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
-	upassBytes, err := json.Marshal(upass)
+	pdata, err := pdataConvert("upass", "upass_test", upass)
 	if err != nil {
-		t.Fatalf("cant marshall upass: %s", err.Error())
-	}
-	upassEnc, err := enc.EncryptAES(upassBytes, []byte(masterKey.Key))
-	if err != nil {
-		t.Fatalf("cant encrypt upass: %s", err.Error())
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
 
 	// TestCases
@@ -152,11 +168,7 @@ func TestAddPrivate(t *testing.T) {
 		pdata structs.Pdata
 	}{
 		{name: "Test UPass",
-			pdata: structs.Pdata{
-				Name:        "test_upass",
-				Type:        "upass",
-				KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
-				PrivateData: base64.StdEncoding.EncodeToString(upassEnc)},
+			pdata: pdata,
 		},
 	}
 
@@ -186,19 +198,10 @@ func TestGetPrivate(t *testing.T) {
 	// setup for Upass
 	upass := structs.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
-	upassBytes, err := json.Marshal(upass)
+	pdata, err := pdataConvert("upass", "upass_test", upass)
 	if err != nil {
-		t.Fatalf("cant marshall upass: %s", err.Error())
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	upassEnc, err := enc.EncryptAES(upassBytes, []byte(masterKey.Key))
-	if err != nil {
-		t.Fatalf("cant encrypt upass: %s", err.Error())
-	}
-	pdata := structs.Pdata{
-		Name:        "test_upass",
-		Type:        "upass",
-		KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
-		PrivateData: base64.StdEncoding.EncodeToString(upassEnc)}
 	err = c.PrivateAdd(userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
@@ -218,6 +221,68 @@ func TestGetPrivate(t *testing.T) {
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
 			have, err := c.PrivateGet(userID, tc.want.Name)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			if have != tc.want {
+				t.Errorf("pdata mismatch: want %v, have %v", tc.want, have)
+			}
+		})
+	}
+}
+
+func TestUpdatePrivate(t *testing.T) {
+	// setup
+	c := setUp()
+	defer c.Close()
+	defer tearDown(c)
+
+	// adding test user
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// setup for Upass
+	//before
+	upassBefore := structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdataBefore, err := pdataConvert("upass", "upass_test", upassBefore)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	err = c.PrivateAdd(userID, pdataBefore)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+	// after
+	upassAfter := structs.UPass{Username: "userNew",
+		Password: "passwordNew", Tags: map[string]string{"test": "testNew"}}
+	pdataAfter, err := pdataConvert("upass", "upass_test", upassAfter)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+
+	tt := []struct {
+		name  string
+		pname string
+		want  structs.Pdata
+	}{
+		{
+			name:  "Update UPass",
+			pname: "upass_test",
+			want:  pdataAfter,
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			err := c.PrivateUpdate(userID, tc.want)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			have, err := c.PrivateGet(userID, tc.pname)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
