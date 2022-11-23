@@ -137,7 +137,7 @@ func (c *Connector) DropTables() error {
 	return nil
 }
 
-// GetUser search for user by email
+// GetUser searches for user by email
 func (c *Connector) GetUser(email string) (structs.User, error) {
 	err := c.checkInit()
 	if err != nil {
@@ -166,16 +166,16 @@ func (c *Connector) GetUser(email string) (structs.User, error) {
 }
 
 // PrivateAdd adds private data in database for specific userID
-func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
+func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) (int64, error) {
 	err := c.checkInit()
 	if err != nil {
-		return err
+		return -1, err
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
 	defer conn.Release()
 	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %s", err.Error())
+		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 
 	// get type id
@@ -186,7 +186,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 	row := conn.QueryRow(c.Ctx, sql, pdata.Type)
 	err = row.Scan(&typeID)
 	if err != nil {
-		return fmt.Errorf("cant get private_type id %s", err.Error())
+		return -1, fmt.Errorf("cant get private_type id %s", err.Error())
 	}
 
 	// Check if pdata don`t exists
@@ -196,26 +196,27 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) error {
 		   WHERE user_id=$1 AND name=$2;`
 	err = conn.QueryRow(c.Ctx, sql, userID, pdata.Name).Scan(&counter)
 	if err != nil {
-		return fmt.Errorf("failed to query users table: %s", err.Error())
+		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
 	if counter != 0 {
-		return structs.ErrPdataAlreatyEsists
+		return -1, structs.ErrPdataAlreatyEsists
 	}
 
-	// inserting data
+	var id int64
 	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64)
-			VALUES($1, $2, $3, $4, $5);`
-	_, err = conn.Exec(c.Ctx, sql,
-		pdata.Name, userID, typeID, pdata.KeyHash, pdata.PrivateData)
+		   VALUES($1, $2, $3, $4, $5)
+		   RETURNING id;`
+	err = conn.QueryRow(c.Ctx, sql,
+		pdata.Name, userID, typeID, pdata.KeyHash, pdata.PrivateData).Scan(&id)
 	if err != nil {
-		return fmt.Errorf("failed to insert data to db: %s", err.Error())
+		return -1, fmt.Errorf("failed to insert data to db: %s", err.Error())
 	}
 
-	return nil
+	return id, nil
 }
 
 // PrivateGet retrive private data from database
-func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error) {
+func (c *Connector) PrivateGet(userID int64, pdataID int64) (structs.Pdata, error) {
 
 	err := c.checkInit()
 	if err != nil {
@@ -228,16 +229,16 @@ func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error
 		return structs.Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 
-	sql := `SELECT a.name, b.name, a.khash_base64, a.data_base64
+	sql := `SELECT a.id, a.name, b.name, a.khash_base64, a.data_base64
 			FROM private_data AS a
 			INNER JOIN private_types AS b
 			ON a.type_id=b.id
-			WHERE a.user_id=$1 AND a.name=$2;`
+			WHERE a.id=$1 AND a.user_id=$2;`
 
-	row := conn.QueryRow(c.Ctx, sql, userID, pname)
+	row := conn.QueryRow(c.Ctx, sql, pdataID, userID)
 	var pdata = structs.Pdata{}
 
-	switch err = row.Scan(&pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData); err {
+	switch err = row.Scan(&pdata.ID, &pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData); err {
 	case pgx.ErrNoRows:
 		return structs.Pdata{}, structs.ErrPdataNotFound
 	case nil:
@@ -246,6 +247,36 @@ func (c *Connector) PrivateGet(userID int64, pname string) (structs.Pdata, error
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
 		return structs.Pdata{}, e
 	}
+}
+
+// GetPrivateID returns private data ID by user_id and pname
+func (c *Connector) GetPdataID(userID int64, name string) (int64, error) {
+	err := c.checkInit()
+	if err != nil {
+		return -1, err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
+	defer conn.Release()
+	if err != nil {
+		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+
+	sql := `SELECT id
+			FROM private_data
+			WHERE user_id=$1 and name=$2`
+	row := conn.QueryRow(c.Ctx, sql, userID, name)
+	var ID int64
+	switch err := row.Scan(&ID); err {
+	case pgx.ErrNoRows:
+		return -1, structs.ErrPdataNotFound
+	case nil:
+		return ID, nil
+	default:
+		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
+		return -1, e
+	}
+
 }
 
 func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
@@ -262,10 +293,10 @@ func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 
 	// inserting data
 	sql := `UPDATE private_data
-			SET khash_base64 = $1, data_base64 = $2
-			WHERE user_id = $3 and name = $4 `
-	res, err := conn.Exec(c.Ctx, sql, pdata.KeyHash,
-		pdata.PrivateData, userID, pdata.Name)
+			SET name = $1, khash_base64 = $2, data_base64 = $3
+			WHERE id = $4 AND user_id = $5`
+	res, err := conn.Exec(c.Ctx, sql, pdata.Name, pdata.KeyHash,
+		pdata.PrivateData, pdata.ID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to insert data to db: %s", err.Error())
 	}

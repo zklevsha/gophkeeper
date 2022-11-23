@@ -174,7 +174,7 @@ func TestAddPrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			err := c.PrivateAdd(userID, tc.pdata)
+			_, err := c.PrivateAdd(userID, tc.pdata)
 			if err != nil {
 				t.Errorf(err.Error())
 			}
@@ -202,10 +202,11 @@ func TestGetPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	err = c.PrivateAdd(userID, pdata)
+	pdataID, err := c.PrivateAdd(userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
+	pdata.ID = pdataID
 
 	// TestCases
 	tt := []struct {
@@ -220,7 +221,7 @@ func TestGetPrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			have, err := c.PrivateGet(userID, tc.want.Name)
+			have, err := c.PrivateGet(userID, tc.want.ID)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -228,6 +229,77 @@ func TestGetPrivate(t *testing.T) {
 				t.Errorf("pdata mismatch: want %v, have %v", tc.want, have)
 			}
 		})
+	}
+}
+
+func TestGetPdataID(t *testing.T) {
+	// setup
+	c := setUp()
+	defer c.Close()
+	defer tearDown(c)
+
+	// adding test user
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// adding another user
+	userIDSecond, err := c.Register(structs.User{Email: "petya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// adding test Pdata
+	pnameFirst := "upass_test"
+	upass := structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err := pdataConvert("upass", pnameFirst, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	firstID, err := c.PrivateAdd(userID, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// adding Pdata of second user
+	pnameSecond := "upass_second"
+	upass = structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err = pdataConvert("upass", pnameSecond, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	secondID, err := c.PrivateAdd(userIDSecond, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// Case1: getting ID of existent pdata
+	have, err := c.GetPdataID(userID, pnameFirst)
+	if err != nil {
+		t.Errorf("GetPdataID returned an error: %s", err.Error())
+	}
+	if have != firstID {
+		t.Errorf("Get wrong PdataID have %d, want: %d", have, firstID)
+	}
+
+	// Case2 : getting notexistent pdata
+	_, err = c.GetPdataID(userID, "not-exists")
+	if !errors.Is(err, structs.ErrPdataNotFound) {
+		t.Errorf("err != structs.ErrUserAuth: %v", err)
+	}
+
+	// Case3: make sure that user one not see user two Private data
+	have, err = c.GetPdataID(userID, pnameSecond)
+	if have == secondID {
+		t.Error("User one have access to pdata of second user")
+	}
+	if !errors.Is(err, structs.ErrPdataNotFound) {
+		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
 }
 
@@ -246,33 +318,33 @@ func TestUpdatePrivate(t *testing.T) {
 
 	// setup for Upass
 	//before
-	upassBefore := structs.UPass{Username: "user",
+	upassBefore := structs.UPass{Name: "before", Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdataBefore, err := pdataConvert("upass", "upass_test", upassBefore)
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	err = c.PrivateAdd(userID, pdataBefore)
+	privateID, err := c.PrivateAdd(userID, pdataBefore)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
+	pdataBefore.ID = privateID
 	// after
-	upassAfter := structs.UPass{Username: "userNew",
+	upassAfter := structs.UPass{Name: "after", Username: "userNew",
 		Password: "passwordNew", Tags: map[string]string{"test": "testNew"}}
 	pdataAfter, err := pdataConvert("upass", "upass_test", upassAfter)
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
+	pdataAfter.ID = privateID
 
 	tt := []struct {
-		name  string
-		pname string
-		want  structs.Pdata
+		name string
+		want structs.Pdata
 	}{
 		{
-			name:  "Update UPass",
-			pname: "upass_test",
-			want:  pdataAfter,
+			name: "Update UPass",
+			want: pdataAfter,
 		},
 	}
 
@@ -282,7 +354,7 @@ func TestUpdatePrivate(t *testing.T) {
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
-			have, err := c.PrivateGet(userID, tc.pname)
+			have, err := c.PrivateGet(userID, tc.want.ID)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}

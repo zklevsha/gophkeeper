@@ -7,20 +7,26 @@ message Pdata {
   string ptype = 2;
   bytes pdata = 3;
   bytes keyHash = 4;
+  int64 ID = 5;
 }
 
 message PdataName {
   string pname = 1;
 }
 
+// Add
 message AddPdataRequest {Pdata pdata = 1;}
 message AddPdataResponse {string response = 1;}
+// Get
 message GetPdataRequest {string pname = 1;}
 message GetPdataResponse {Pdata pdata = 1;}
-
+// Update
+message UpdatePdataRequest {Pdata pdata = 1;}
+message UpdatePdataResponse {string response = 1;}
 
 service PrivateData {
   rpc AddPdata(AddPdataRequest) returns (AddPdataResponse) {}
   rpc GetPdata(GetPdataRequest) returns (GetPdataResponse) {}
+  rpc UpdatePdata(UpdatePdataRequest) returns (UpdatePdataResponse) {}
 }
 

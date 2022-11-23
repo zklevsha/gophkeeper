@@ -57,7 +57,7 @@ func (s *pdataServer) AddPdata(ctx context.Context, in *pb.AddPdataRequest) (*pb
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
 	}
-	err = s.db.PrivateAdd(userID, pdata)
+	_, err = s.db.PrivateAdd(userID, pdata)
 	if err != nil {
 		e := fmt.Sprintf("failed to add pdata to database: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -77,7 +77,13 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 		return nil, status.Errorf(getCode(err), e)
 	}
 
-	pdata, err := s.db.PrivateGet(userID, in.Pname)
+	pdataID, err := s.db.GetPdataID(userID, in.Pname)
+	if err != nil {
+		e := fmt.Sprintf("failed to get pdataid: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+
+	pdata, err := s.db.PrivateGet(userID, pdataID)
 	if err != nil {
 		e := fmt.Sprintf("failed to get pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -94,10 +100,36 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 		return nil, status.Error(codes.Internal, e)
 	}
 	pbPdata := pb.Pdata{
+		ID:      pdataID,
 		Pname:   pdata.Name,
 		Ptype:   pdata.Type,
 		KeyHash: keyHash,
 		Pdata:   privateData}
 
 	return &pb.GetPdataResponse{Pdata: &pbPdata}, nil
+}
+
+func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest) (*pb.UpdatePdataResponse, error) {
+	if in.Pdata == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "pname is not set")
+	}
+	userID, err := s.getUserId(ctx)
+	if err != nil {
+		e := fmt.Sprintf("failed to get userid: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+	pdata := structs.Pdata{
+		ID:          in.Pdata.ID,
+		Name:        in.Pdata.Pname,
+		Type:        in.Pdata.Ptype,
+		KeyHash:     base64.StdEncoding.EncodeToString(in.Pdata.KeyHash),
+		PrivateData: base64.StdEncoding.EncodeToString(in.Pdata.Pdata)}
+
+	err = s.db.PrivateUpdate(userID, pdata)
+	if err != nil {
+		e := fmt.Sprintf("failed to update pdata: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+	r := fmt.Sprintf("pdata %s was updated sucsessfully", pdata.Name)
+	return &pb.UpdatePdataResponse{Response: r}, nil
 }

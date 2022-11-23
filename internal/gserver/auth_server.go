@@ -1,3 +1,5 @@
+// authServer implements Register and Authentication logic
+
 package gserver
 
 import (

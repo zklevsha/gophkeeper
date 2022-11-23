@@ -32,6 +32,8 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			upassCreate(mstorage, ctx, gclient)
 		case "upass-get":
 			upassGet(mstorage, ctx, gclient)
+		case "upass-update":
+			upassUpdate(mstorage, ctx, gclient)
 		case "help":
 			help()
 		case "exit", "quit":
