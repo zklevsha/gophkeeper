@@ -85,10 +85,10 @@ func (c *Connector) Register(user structs.User) (int64, error) {
 // This function mainly used in tests
 func (c *Connector) CreateTables() error {
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	// Recreating schema
 	schemaPath := "../../sql/schema.sql"
@@ -119,10 +119,10 @@ func (c *Connector) CreateTables() error {
 // This function mainly used in tests.
 func (c *Connector) DropTables() error {
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	dropPath := "../../sql/drop.sql"
 	dropSQL, err := os.ReadFile(dropPath)
@@ -145,10 +145,10 @@ func (c *Connector) GetUser(email string) (structs.User, error) {
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return structs.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	var user structs.User
 	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
@@ -173,10 +173,10 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) (int64, error)
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	// get type id
 	var typeID int64
@@ -224,10 +224,10 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (structs.Pdata, erro
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return structs.Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	sql := `SELECT a.id, a.name, b.name, a.khash_base64, a.data_base64
 			FROM private_data AS a
@@ -257,10 +257,10 @@ func (c *Connector) GetPdataID(userID int64, name string) (int64, error) {
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	sql := `SELECT id
 			FROM private_data
@@ -286,10 +286,10 @@ func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
-	defer conn.Release()
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
+	defer conn.Release()
 
 	// inserting data
 	sql := `UPDATE private_data
@@ -308,4 +308,43 @@ func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 		return fmt.Errorf("rows affected: %d", rowsAffected)
 	}
 	return nil
+}
+
+func (c *Connector) PrivateList(userID int64, ptype string) ([]structs.PdataEntry, error) {
+	err := c.checkInit()
+	if err != nil {
+		return nil, err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+	defer conn.Release()
+
+	sql := `SELECT a.id, a.name
+			FROM private_data as a
+			INNER JOIN private_types as b
+			ON a.type_id=b.id
+			WHERE a.user_id=$1 AND b.name=$2
+			ORDER BY a.name`
+	rows, err := conn.Query(c.Ctx, sql, userID, ptype)
+	if err != nil {
+		return nil, fmt.Errorf("db query error: %s", err.Error())
+	}
+
+	var pdataList []structs.PdataEntry
+	for rows.Next() {
+		var entry structs.PdataEntry
+		err := rows.Scan(&entry.ID, &entry.Name)
+		if err != nil {
+			return nil, fmt.Errorf("row scan error: %s", err.Error())
+		}
+		pdataList = append(pdataList, entry)
+	}
+	if rows.Err() != nil {
+		return nil, fmt.Errorf("row scan error: %s", rows.Err())
+	}
+
+	return pdataList, nil
 }

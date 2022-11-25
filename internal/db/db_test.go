@@ -364,3 +364,80 @@ func TestUpdatePrivate(t *testing.T) {
 		})
 	}
 }
+
+func TestPrivateList(t *testing.T) {
+
+	// setup
+	c := setUp()
+	defer c.Close()
+	defer tearDown(c)
+
+	// adding test user
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// adding first Pdata
+	pnameFirst := "upass1"
+	upass := structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err := pdataConvert("upass", pnameFirst, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	pdataFirstID, err := c.PrivateAdd(userID, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// adding second pdata
+	pnameSecond := "upass2"
+	upass = structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err = pdataConvert("upass", pnameSecond, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	pdataSecondID, err := c.PrivateAdd(userID, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// TestCases
+	tt := []struct {
+		name  string
+		ptype string
+		want  []structs.PdataEntry
+	}{
+		{
+			name:  "Test Upass",
+			ptype: "upass",
+			want: []structs.PdataEntry{
+				{Name: pnameFirst, ID: pdataFirstID},
+				{Name: pnameSecond, ID: pdataSecondID},
+			},
+		},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have, err := c.PrivateList(userID, tc.ptype)
+			if err != nil {
+				t.Fatalf(err.Error())
+			}
+			if len(have) != len(tc.want) {
+				t.Fatalf("result array lengh is wrong have: %d, want: %d",
+					len(have), len(tc.want))
+			}
+			for idx, entryHave := range have {
+				entryWant := tc.want[idx]
+				if entryWant != entryHave {
+					t.Errorf("entry mismatch have: %v, want: %v", entryHave, entryWant)
+				}
+			}
+		})
+	}
+
+}
