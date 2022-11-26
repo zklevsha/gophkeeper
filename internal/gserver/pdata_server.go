@@ -133,3 +133,26 @@ func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest
 	r := fmt.Sprintf("pdata %s was updated sucsessfully", pdata.Name)
 	return &pb.UpdatePdataResponse{Response: r}, nil
 }
+
+func (s *pdataServer) ListPdata(ctx context.Context, in *pb.ListPdataRequest) (*pb.ListPdataResponse, error) {
+	userID, err := s.getUserId(ctx)
+	if err != nil {
+		e := fmt.Sprintf("failed to get userid: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+
+	pdata, err := s.db.PrivateList(userID, in.Ptype)
+	if err != nil {
+		e := fmt.Sprintf("failed to list pdata: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+
+	var pdataPointers []*pb.PdataEntry
+	for _, p := range pdata {
+		pdataPointers = append(pdataPointers,
+			&pb.PdataEntry{Name: p.Name, ID: p.ID})
+	}
+
+	return &pb.ListPdataResponse{PdataEtnry: pdataPointers}, nil
+
+}

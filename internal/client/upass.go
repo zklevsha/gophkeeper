@@ -84,7 +84,24 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 		return
 	}
 
-	pname := getInput("upass name:", notEmpty, false)
+	// getting list of available pnames
+	listResponse, err := gclient.Pdata.ListPdata(ctx, &pb.ListPdataRequest{Ptype: "upass"})
+	if err != nil {
+		log.Printf("ERROR: cant list pdata: %s\n", err.Error())
+		return
+	}
+	if len(listResponse.PdataEtnry) == 0 {
+		log.Println("you dont have any upass entries")
+		return
+	}
+	entries := make(map[string]int64)
+	var pnames []string
+	for _, e := range listResponse.PdataEtnry {
+		pnames = append(pnames, e.Name)
+		entries[e.Name] = e.ID
+	}
+
+	pname := inputSelect("Upass name: ", pnames)
 	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
@@ -93,7 +110,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 
 	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
-		log.Printf("cant decode upass: %s\n", err.Error())
+		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
 	}
 	up := cleaned.(structs.UPass)
 
@@ -112,8 +129,22 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		log.Println(err.Error())
 		return
 	}
+
 	// Getting current upass
-	pname := getInput("upass name:", notEmpty, false)
+	listResponse, err := gclient.Pdata.ListPdata(ctx, &pb.ListPdataRequest{Ptype: "upass"})
+	if err != nil {
+		log.Printf("ERROR: cant list pdata: %s\n", err.Error())
+		return
+	}
+	if len(listResponse.PdataEtnry) == 0 {
+		log.Println("you dont have any upass entries")
+		return
+	}
+	var pnames []string
+	for _, e := range listResponse.PdataEtnry {
+		pnames = append(pnames, e.Name)
+	}
+	pname := inputSelect("Pname to update: ", pnames)
 	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
@@ -145,7 +176,12 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 			return
 		}
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", up.Tags), isTags, false)
+	tagsJson, err := json.Marshal(up.Tags)
+	if err != nil {
+		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
+		return
+	}
+	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
