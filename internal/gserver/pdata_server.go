@@ -156,3 +156,18 @@ func (s *pdataServer) ListPdata(ctx context.Context, in *pb.ListPdataRequest) (*
 	return &pb.ListPdataResponse{PdataEtnry: pdataPointers}, nil
 
 }
+
+func (s *pdataServer) DeletePdata(ctx context.Context, in *pb.DeletePdataRequest) (*pb.DeletePdataResponse, error) {
+	userID, err := s.getUserId(ctx)
+	if err != nil {
+		e := fmt.Sprintf("failed to get userid: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+
+	err = s.db.PrivateDelete(userID, in.PdataID)
+	if err != nil {
+		e := fmt.Sprintf("failed to delete pdata: %s", err.Error())
+		return nil, status.Errorf(getCode(err), e)
+	}
+	return &pb.DeletePdataResponse{Response: "pdata was deleted"}, nil
+}

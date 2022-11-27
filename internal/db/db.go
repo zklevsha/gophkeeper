@@ -348,3 +348,34 @@ func (c *Connector) PrivateList(userID int64, ptype string) ([]structs.PdataEntr
 
 	return pdataList, nil
 }
+
+// PrivateDelete deletes private data from database
+func (c *Connector) PrivateDelete(userID int64, pdataID int64) error {
+
+	err := c.checkInit()
+	if err != nil {
+		return err
+	}
+
+	conn, err := c.Pool.Acquire(c.Ctx)
+	if err != nil {
+		return fmt.Errorf("failed to acquire connection: %s", err.Error())
+	}
+	defer conn.Release()
+
+	sql := `DELETE FROM private_data
+			WHERE id=$1 AND user_id=$2`
+
+	res, err := conn.Exec(c.Ctx, sql, pdataID, userID)
+	if err != nil {
+		return fmt.Errorf("query error: %s", err.Error())
+	}
+	rowsAffected := res.RowsAffected()
+	if rowsAffected == 0 {
+		return structs.ErrPdataNotFound
+	}
+	if rowsAffected > 1 {
+		return fmt.Errorf("oy vey, i`ve deleted %d rows", rowsAffected)
+	}
+	return nil
+}

@@ -441,3 +441,71 @@ func TestPrivateList(t *testing.T) {
 	}
 
 }
+
+func TestPdataDelete(t *testing.T) {
+	// setup
+	c := setUp()
+	defer c.Close()
+	defer tearDown(c)
+
+	// adding test user
+	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// adding another user
+	userIDSecond, err := c.Register(structs.User{Email: "petya@test.ru",
+		Password: "password"})
+	if err != nil {
+		t.Fatalf("cant register a test user: %s", err.Error())
+	}
+
+	// adding test Pdata
+	pnameFirst := "upass_test"
+	upass := structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err := pdataConvert("upass", pnameFirst, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	firstID, err := c.PrivateAdd(userID, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// adding Pdata of second user
+	pnameSecond := "upass_second"
+	upass = structs.UPass{Username: "user",
+		Password: "password", Tags: map[string]string{"test": "test"}}
+	pdata, err = pdataConvert("upass", pnameSecond, upass)
+	if err != nil {
+		t.Fatalf("cant convert upass to pdata: %s", err.Error())
+	}
+	secondID, err := c.PrivateAdd(userIDSecond, pdata)
+	if err != nil {
+		t.Fatalf("cant add pdata to database: %s", err.Error())
+	}
+
+	// Case1: deleting pdata
+	err = c.PrivateDelete(userID, firstID)
+	if err != nil {
+		t.Errorf("PrivateDelete returned an error: %s", err.Error())
+	}
+
+	// Case2 : getting notexistent pdata
+	err = c.PrivateDelete(userID, 99)
+	if !errors.Is(err, structs.ErrPdataNotFound) {
+		t.Errorf("err != structs.ErrUserAuth: %v", err)
+	}
+
+	// Case3: make sure that user one not see user two Private data
+	err = c.PrivateDelete(userID, secondID)
+	if err == nil {
+		t.Error("User one can delete pdata of second user")
+	}
+	if !errors.Is(err, structs.ErrPdataNotFound) {
+		t.Errorf("err != structs.ErrUserAuth: %v", err)
+	}
+}

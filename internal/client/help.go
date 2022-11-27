@@ -20,6 +20,7 @@ var upassCmds = map[string]string{
 	"upass-add":    "generate user/password pair",
 	"upass-get":    "retrive user/password pair",
 	"upass-update": "update user/password pair",
+	"upass-delete": "delete user/password pair",
 }
 
 var otherCmds = map[string]string{

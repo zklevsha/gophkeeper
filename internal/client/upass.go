@@ -218,3 +218,36 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 	log.Println(updateResp.Response)
 }
+
+func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+	err := upassReqCheck(mstorage)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// getting list of available pnames
+	listResponse, err := gclient.Pdata.ListPdata(ctx, &pb.ListPdataRequest{Ptype: "upass"})
+	if err != nil {
+		log.Printf("ERROR: cant list pdata: %s\n", err.Error())
+		return
+	}
+	if len(listResponse.PdataEtnry) == 0 {
+		log.Println("you dont have any upass entries")
+		return
+	}
+	entries := make(map[string]int64)
+	var pnames []string
+	for _, e := range listResponse.PdataEtnry {
+		pnames = append(pnames, e.Name)
+		entries[e.Name] = e.ID
+	}
+
+	pname := inputSelect("Upass name: ", pnames)
+	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	if err != nil {
+		log.Printf("ERROR: cant delete pdata: %s", err.Error())
+		return
+	}
+	log.Printf("upass %s (%d) was deleted", pname, entries[pname])
+}

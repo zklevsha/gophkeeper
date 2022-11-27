@@ -26,6 +26,7 @@ type PrivateDataClient interface {
 	GetPdata(ctx context.Context, in *GetPdataRequest, opts ...grpc.CallOption) (*GetPdataResponse, error)
 	UpdatePdata(ctx context.Context, in *UpdatePdataRequest, opts ...grpc.CallOption) (*UpdatePdataResponse, error)
 	ListPdata(ctx context.Context, in *ListPdataRequest, opts ...grpc.CallOption) (*ListPdataResponse, error)
+	DeletePdata(ctx context.Context, in *DeletePdataRequest, opts ...grpc.CallOption) (*DeletePdataResponse, error)
 }
 
 type privateDataClient struct {
@@ -72,6 +73,15 @@ func (c *privateDataClient) ListPdata(ctx context.Context, in *ListPdataRequest,
 	return out, nil
 }
 
+func (c *privateDataClient) DeletePdata(ctx context.Context, in *DeletePdataRequest, opts ...grpc.CallOption) (*DeletePdataResponse, error) {
+	out := new(DeletePdataResponse)
+	err := c.cc.Invoke(ctx, "/PrivateData/DeletePdata", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PrivateDataServer is the server API for PrivateData service.
 // All implementations must embed UnimplementedPrivateDataServer
 // for forward compatibility
@@ -80,6 +90,7 @@ type PrivateDataServer interface {
 	GetPdata(context.Context, *GetPdataRequest) (*GetPdataResponse, error)
 	UpdatePdata(context.Context, *UpdatePdataRequest) (*UpdatePdataResponse, error)
 	ListPdata(context.Context, *ListPdataRequest) (*ListPdataResponse, error)
+	DeletePdata(context.Context, *DeletePdataRequest) (*DeletePdataResponse, error)
 	mustEmbedUnimplementedPrivateDataServer()
 }
 
@@ -98,6 +109,9 @@ func (UnimplementedPrivateDataServer) UpdatePdata(context.Context, *UpdatePdataR
 }
 func (UnimplementedPrivateDataServer) ListPdata(context.Context, *ListPdataRequest) (*ListPdataResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ListPdata not implemented")
+}
+func (UnimplementedPrivateDataServer) DeletePdata(context.Context, *DeletePdataRequest) (*DeletePdataResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method DeletePdata not implemented")
 }
 func (UnimplementedPrivateDataServer) mustEmbedUnimplementedPrivateDataServer() {}
 
@@ -184,6 +198,24 @@ func _PrivateData_ListPdata_Handler(srv interface{}, ctx context.Context, dec fu
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PrivateData_DeletePdata_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(DeletePdataRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PrivateDataServer).DeletePdata(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/PrivateData/DeletePdata",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PrivateDataServer).DeletePdata(ctx, req.(*DeletePdataRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PrivateData_ServiceDesc is the grpc.ServiceDesc for PrivateData service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -206,6 +238,10 @@ var PrivateData_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ListPdata",
 			Handler:    _PrivateData_ListPdata_Handler,
+		},
+		{
+			MethodName: "DeletePdata",
+			Handler:    _PrivateData_DeletePdata_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
