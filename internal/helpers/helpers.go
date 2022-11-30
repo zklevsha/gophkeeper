@@ -24,6 +24,7 @@ func GetRandomSrt(strLen int) string {
 	return string(b)
 }
 
+// ToPdata converts Upass/Cards... to Pdata
 func ToPdata(ptype string, input interface{}, key structs.MasterKey) (*pb.Pdata, error) {
 	var name string
 	var encoded []byte
@@ -35,6 +36,13 @@ func ToPdata(ptype string, input interface{}, key structs.MasterKey) (*pb.Pdata,
 		encoded, err = json.Marshal(up)
 		if err != nil {
 			return nil, fmt.Errorf("cant encode upass: %s", err.Error())
+		}
+	case "card":
+		card := input.(structs.Card)
+		name = card.Name
+		encoded, err = json.Marshal(card)
+		if err != nil {
+			return nil, fmt.Errorf("cant encode card: %s", err.Error())
 		}
 	default:
 		return nil, fmt.Errorf("%s is not supported", ptype)
@@ -50,7 +58,7 @@ func ToPdata(ptype string, input interface{}, key structs.MasterKey) (*pb.Pdata,
 func FromPdata(pdata *pb.Pdata, key structs.MasterKey) (interface{}, error) {
 	// check if we using correct master key
 	if string(pdata.KeyHash) != string(key.KeyHash) {
-		e := fmt.Errorf(`ERROR: key hash mismatch
+		e := fmt.Errorf(`key hash mismatch
 					hash of the key that used to encrypt pdata: %v\
 					masterkey hash: %v`, pdata.KeyHash, key.KeyHash)
 		return nil, e
@@ -59,7 +67,7 @@ func FromPdata(pdata *pb.Pdata, key structs.MasterKey) (interface{}, error) {
 	// decrypt
 	decrypted, err := enc.DecryptAES(pdata.Pdata, []byte(key.Key))
 	if err != nil {
-		return nil, fmt.Errorf("ERROR cant decrypt data: %s", err.Error())
+		return nil, fmt.Errorf("error cant decrypt data: %s", err.Error())
 	}
 
 	// decode
@@ -68,9 +76,16 @@ func FromPdata(pdata *pb.Pdata, key structs.MasterKey) (interface{}, error) {
 		var up structs.UPass
 		err = json.Unmarshal(decrypted, &up)
 		if err != nil {
-			return nil, fmt.Errorf("ERROR cant decode upass JSON to struct: %s", err.Error())
+			return nil, fmt.Errorf("error cant decode upass JSON to struct: %s", err.Error())
 		}
 		return up, nil
+	case "card":
+		var card structs.Card
+		err = json.Unmarshal(decrypted, &card)
+		if err != nil {
+			return nil, fmt.Errorf("error cant decode card JSON to struct: %s", err.Error())
+		}
+		return card, nil
 	default:
 		return nil, fmt.Errorf("ptype: %s is not supported", pdata.Ptype)
 	}

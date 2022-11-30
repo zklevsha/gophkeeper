@@ -17,10 +17,14 @@ var masterKeyCmds = map[string]string{
 }
 
 var upassCmds = map[string]string{
-	"upass-add":    "generate user/password pair",
-	"upass-get":    "retrive user/password pair",
-	"upass-update": "update user/password pair",
-	"upass-delete": "delete user/password pair",
+	"upass-add":    "add user/password entry",
+	"upass-get":    "retrive user/password entry",
+	"upass-update": "update user/password entry",
+	"upass-delete": "delete user/password entry",
+}
+
+var cardCmds = map[string]string{
+	"card-add": "add credit card entry",
 }
 
 var otherCmds = map[string]string{
@@ -41,6 +45,11 @@ func help() {
 
 	fmt.Println("Upass commands")
 	for cmd, desc := range upassCmds {
+		log.Printf("\t* %s - %s", cmd, desc)
+	}
+
+	fmt.Println("Credit card commands")
+	for cmd, desc := range cardCmds {
 		log.Printf("\t* %s - %s", cmd, desc)
 	}
 

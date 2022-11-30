@@ -15,6 +15,18 @@ var ErrEmptyInput = errors.New("input is empty")
 // ErrInvalidEmail returns when we failed to parse input email
 var ErrInvalidEmail = errors.New("email is invalid")
 
+// ErrInvalidCardNumber returns when we failed to parse input card number
+var ErrInvalidCardNumber = errors.New("expected format: XXXX XXXX XXXX XXXX")
+
+// ErrInvalidCardHolder returns when we failed to parse input card holder
+var ErrInvalidCardHolder = errors.New("expected format: JOHN DOE")
+
+// ErrInvalidCardExpire return when we failed to parse input card expiration date
+var ErrInvalidCardExpire = errors.New("expected format: MM/YY")
+
+// ErrInvalidCardCVV return when we failed to parse input card CVV/CVC
+var ErrInvalidCardCVV = errors.New("expected format: XXX")
+
 // KeyValueError returns when we cant parse key-value pairs
 var ErrKeyValue = errors.New("failed to parse input as json")
 

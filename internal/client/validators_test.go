@@ -53,3 +53,103 @@ func TestIsEmail(t *testing.T) {
 		})
 	}
 }
+
+func TestIsCartNumber(t *testing.T) {
+
+	tt := []struct {
+		name  string
+		input string
+		want  error
+	}{
+		{name: "good card", input: "4444 4444 4444 4444",
+			want: nil},
+		{name: "bad card", input: "123 31 dldsl3 11",
+			want: structs.ErrInvalidCardNumber},
+		{name: "empty input", input: "",
+			want: structs.ErrInvalidCardNumber},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have := isCardNumber(tc.input)
+			if have != tc.want {
+				t.Errorf("validator mismatch: have: %v,  want: %v", have, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsCardHolder(t *testing.T) {
+
+	tt := []struct {
+		name  string
+		input string
+		want  error
+	}{
+		{name: "good holder", input: "JACK WHITE",
+			want: nil},
+		{name: "bad holder", input: "BOB ivan",
+			want: structs.ErrInvalidCardHolder},
+		{name: "empty input", input: "",
+			want: structs.ErrInvalidCardHolder},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have := isCardHolder(tc.input)
+			if have != tc.want {
+				t.Errorf("validator mismatch: have: %v,  want: %v", have, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsCardExpire(t *testing.T) {
+
+	tt := []struct {
+		name  string
+		input string
+		want  error
+	}{
+		{name: "good expire", input: "11/22",
+			want: nil},
+		{name: "bad expire", input: "100/1",
+			want: structs.ErrInvalidCardExpire},
+		{name: "empty input", input: "",
+			want: structs.ErrInvalidCardExpire},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have := isCardExire(tc.input)
+			if have != tc.want {
+				t.Errorf("validator mismatch: have: %v,  want: %v", have, tc.want)
+			}
+		})
+	}
+}
+
+func TestIsCardCVC(t *testing.T) {
+
+	tt := []struct {
+		name  string
+		input string
+		want  error
+	}{
+		{name: "good CVC", input: "162",
+			want: nil},
+		{name: "bad CVC", input: "1000",
+			want: structs.ErrInvalidCardCVV},
+		{name: "empty input", input: "",
+			want: structs.ErrInvalidCardCVV},
+	}
+
+	for _, tc := range tt {
+		t.Run(tc.name, func(t *testing.T) {
+			have := isCardCVC(tc.input)
+			if have != tc.want {
+				t.Errorf("validator mismatch: have: %v,  want: %v", have, tc.want)
+			}
+		})
+	}
+}

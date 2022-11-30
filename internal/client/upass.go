@@ -3,7 +3,6 @@ package client
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"log"
 
@@ -15,7 +14,7 @@ import (
 // upassCreate  creates UserPassword entry and sends it to server via gRPC
 func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
 
-	err := upassReqCheck(mstorage)
+	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -64,21 +63,9 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 
 }
 
-// upassReqCheck checks that memstorage has all needed infomation
-// for upass creation/retrival (token, masterkey...)
-func upassReqCheck(mstorage *structs.MemStorage) error {
-	if mstorage.MasterKey.Key == "" {
-		return errors.New("master-key does not exists add it via key-generate/key-load commands")
-	}
-	if mstorage.Token == "" {
-		return errors.New("login required (login)")
-	}
-	return nil
-}
-
 // upassGet retrives Upass from gRPC server
 func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
-	err := upassReqCheck(mstorage)
+	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -124,7 +111,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 }
 
 func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
-	err := upassReqCheck(mstorage)
+	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
 		return
@@ -220,7 +207,7 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 }
 
 func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
-	err := upassReqCheck(mstorage)
+	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
 		return

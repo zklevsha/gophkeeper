@@ -18,16 +18,19 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 	for {
 		command := getInput("command: ", notEmpty, false)
 		switch command {
+		// Authentication
 		case "register":
 			register(ctx, gclient)
 		case "login":
 			login(ctx, gclient, mstorage)
+		// MasterKey
 		case "key-generate":
 			keyGenerate(mstorage)
 		case "key-load":
 			keyLoad("", mstorage)
 		case "key-print":
 			keyPrint(mstorage)
+		// Upass
 		case "upass-add":
 			upassCreate(mstorage, ctx, gclient)
 		case "upass-get":
@@ -36,6 +39,10 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			upassUpdate(mstorage, ctx, gclient)
 		case "upass-delete":
 			upassDelete(mstorage, ctx, gclient)
+		// Credit card
+		case "card-add":
+			cardCreate(mstorage, ctx, gclient)
+		// Other
 		case "help":
 			help()
 		case "exit", "quit":
