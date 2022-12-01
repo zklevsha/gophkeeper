@@ -25,6 +25,7 @@ var upassCmds = map[string]string{
 
 var cardCmds = map[string]string{
 	"card-add": "add credit card entry",
+	"card-get": "retrive card entry",
 }
 
 var otherCmds = map[string]string{

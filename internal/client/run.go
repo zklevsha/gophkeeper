@@ -42,7 +42,9 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 		// Credit card
 		case "card-add":
 			cardCreate(mstorage, ctx, gclient)
-		// Other
+		case "card-get":
+			cardGet(mstorage, ctx, gclient)
+			// Other
 		case "help":
 			help()
 		case "exit", "quit":

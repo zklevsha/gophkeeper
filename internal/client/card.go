@@ -2,6 +2,7 @@ package client
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
@@ -47,4 +48,50 @@ func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 		return
 	}
 	log.Println(resp.Response)
+}
+
+// cardCreate retreives Credit card entry from the server
+func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+
+	err := reqCheck(mstorage)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// getting list of existing card entries
+	entries, err := listPnames(ctx, gclient, "card")
+	if err != nil {
+		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any card entries")
+		return
+	}
+	var pnames []string
+	for pname := range entries {
+		pnames = append(pnames, pname)
+	}
+
+	// parse input
+	pname := inputSelect("Card name: ", pnames)
+	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
+	if err != nil {
+		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
+	}
+
+	// decrypting and converting to Card struct
+	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
+	if err != nil {
+		log.Printf("ERROR: cant decode card: %s\n", err.Error())
+	}
+	card := cleaned.(structs.Card)
+
+	// print data
+	upass_pretty, err := json.MarshalIndent(card, "", " ")
+	if err != nil {
+		log.Printf("ERROR cant encode upass JSON : %s\n", err.Error())
+	} else {
+		log.Println(string(upass_pretty))
+	}
 }
