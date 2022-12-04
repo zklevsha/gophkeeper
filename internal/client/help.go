@@ -27,6 +27,7 @@ var cardCmds = map[string]string{
 	"card-add":    "add credit card entry",
 	"card-get":    "retrive card entry",
 	"card-update": "update card entry",
+	"card-delete": "delete card entry",
 }
 
 var otherCmds = map[string]string{

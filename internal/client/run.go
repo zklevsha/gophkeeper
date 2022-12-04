@@ -46,6 +46,8 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			cardGet(mstorage, ctx, gclient)
 		case "card-update":
 			cardUpdate(mstorage, ctx, gclient)
+		case "card-delete":
+			cardDelete(mstorage, ctx, gclient)
 			// Other
 		case "help":
 			help()

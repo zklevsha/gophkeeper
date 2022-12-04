@@ -117,7 +117,7 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// Getting current upass
-	entries, err := listPnames(ctx, gclient, "card")
+	entries, err := listPnames(ctx, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 	}
@@ -214,20 +214,17 @@ func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// getting list of available pnames
-	listResponse, err := gclient.Pdata.ListPdata(ctx, &pb.ListPdataRequest{Ptype: "upass"})
+	entries, err := listPnames(ctx, gclient, "upass")
 	if err != nil {
-		log.Printf("ERROR: cant list pdata: %s\n", err.Error())
+		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any upass entries")
 		return
 	}
-	if len(listResponse.PdataEtnry) == 0 {
-		log.Println("you dont have any upass entries")
-		return
-	}
-	entries := make(map[string]int64)
 	var pnames []string
-	for _, e := range listResponse.PdataEtnry {
-		pnames = append(pnames, e.Name)
-		entries[e.Name] = e.ID
+	for pname := range entries {
+		pnames = append(pnames, pname)
 	}
 
 	pname := inputSelect("Upass name: ", pnames)
@@ -236,5 +233,5 @@ func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())
 		return
 	}
-	log.Printf("upass %s (%d) was deleted", pname, entries[pname])
+	log.Printf("upass %s was deleted", pname)
 }

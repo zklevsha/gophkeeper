@@ -210,3 +210,33 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	log.Println(resp.Response)
 
 }
+
+func cardDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+	err := reqCheck(mstorage)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// getting list of available pnames
+	entries, err := listPnames(ctx, gclient, "card")
+	if err != nil {
+		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any card entries")
+		return
+	}
+	var pnames []string
+	for pname := range entries {
+		pnames = append(pnames, pname)
+	}
+
+	pname := inputSelect("Card name: ", pnames)
+	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	if err != nil {
+		log.Printf("ERROR: cant delete card: %s", err.Error())
+		return
+	}
+	log.Printf("card %s was deleted", pname)
+}
