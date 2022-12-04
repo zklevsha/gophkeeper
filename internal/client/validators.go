@@ -48,6 +48,13 @@ func isCardNumber(input string) error {
 	return nil
 }
 
+func isCardNumberOrEmpty(input string) error {
+	if len(input) == 0 {
+		return nil
+	}
+	return isCardNumber(input)
+}
+
 func isCardHolder(input string) error {
 	matched, err := regexp.MatchString("[A-Z]+ [A-Z]+", input)
 	if err != nil {
@@ -57,6 +64,13 @@ func isCardHolder(input string) error {
 		return structs.ErrInvalidCardHolder
 	}
 	return nil
+}
+
+func isCardHolderOrEmpty(input string) error {
+	if len(input) == 0 {
+		return nil
+	}
+	return isCardHolder(input)
 }
 
 func isCardExire(input string) error {
@@ -70,6 +84,13 @@ func isCardExire(input string) error {
 	return nil
 }
 
+func isCardExpireOrEmpty(input string) error {
+	if len(input) == 0 {
+		return nil
+	}
+	return isCardExire(input)
+}
+
 func isCardCVC(input string) error {
 	matched, err := regexp.MatchString("^[0-9]{3}$", input)
 	if err != nil {
@@ -79,4 +100,11 @@ func isCardCVC(input string) error {
 		return structs.ErrInvalidCardCVV
 	}
 	return nil
+}
+
+func isCardCVCorEmpty(input string) error {
+	if len(input) == 0 {
+		return nil
+	}
+	return isCardCVC(input)
 }

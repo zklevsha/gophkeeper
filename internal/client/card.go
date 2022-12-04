@@ -3,6 +3,7 @@ package client
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
@@ -24,7 +25,7 @@ func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	number := getInput("number(XXXX XXXX XXXX XXXX):", isCardNumber, false)
 	holder := getInput("holder(JOHN DOE):", isCardHolder, false)
 	expire := getInput("expire(MM/YY):", isCardExire, false)
-	cvc := getInput("CVV/CVC:", isCardCVC, false)
+	cvc := getInput("CVV/CVC(XXX):", isCardCVC, false)
 	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
 	if err != nil {
 		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
@@ -50,7 +51,7 @@ func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	log.Println(resp.Response)
 }
 
-// cardCreate retreives Credit card entry from the server
+// cardGet retreives Credit card entry from the server
 func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
 
 	err := reqCheck(mstorage)
@@ -73,17 +74,20 @@ func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs
 		pnames = append(pnames, pname)
 	}
 
-	// parse input
+	// Getting pdata from server
 	pname := inputSelect("Card name: ", pnames)
-	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
+	pdataID := entries[pname]
+	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
+		return
 	}
 
 	// decrypting and converting to Card struct
 	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode card: %s\n", err.Error())
+		return
 	}
 	card := cleaned.(structs.Card)
 
@@ -94,4 +98,115 @@ func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs
 	} else {
 		log.Println(string(upass_pretty))
 	}
+}
+
+// cardUpdate Credit card entry from the server
+func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+
+	err := reqCheck(mstorage)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// getting list of existing card entries
+	entries, err := listPnames(ctx, gclient, "card")
+	if err != nil {
+		log.Printf("ERROR: cant retrive list of existing card entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any card entries")
+		return
+	}
+
+	// getting selected card
+	var pnames []string
+	for pname := range entries {
+		pnames = append(pnames, pname)
+	}
+	pname := inputSelect("Card name: ", pnames)
+	pdataID := entries[pname]
+	getPdataResponse, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	if err != nil {
+		log.Printf("ERROR: cant get card entry: %s\n", err.Error())
+		return
+	}
+	cleaned, err := helpers.FromPdata(getPdataResponse.Pdata, mstorage.MasterKey)
+	if err != nil {
+		log.Printf("ERROR: cant decode card: %s\n", err.Error())
+		return
+	}
+	oldCard := cleaned.(structs.Card)
+
+	// getting new data from input
+	var newCard structs.Card
+	// name
+	name := getInput(fmt.Sprintf("name[%s]:", oldCard.Name), any, false)
+	if name == "" {
+		newCard.Name = oldCard.Name
+	} else {
+		newCard.Name = name
+	}
+	// card number
+	number := getInput(fmt.Sprintf("number[%s]:", oldCard.Number), isCardNumberOrEmpty, false)
+	if number == "" {
+		newCard.Number = oldCard.Number
+	} else {
+		newCard.Number = number
+	}
+	// card holder
+	holder := getInput(fmt.Sprintf("holder(%s):", oldCard.Holder), isCardHolderOrEmpty, false)
+	if holder == "" {
+		newCard.Holder = oldCard.Holder
+	} else {
+		newCard.Holder = holder
+	}
+	// card expiration date
+	expire := getInput(fmt.Sprintf("expire[%s]:", oldCard.Expire), isCardExpireOrEmpty, false)
+	if expire == "" {
+		newCard.Expire = oldCard.Expire
+	} else {
+		newCard.Expire = expire
+	}
+	// card CVV/CVC number
+	cvc := getInput(fmt.Sprintf("CVV/CVC[%s]:)", oldCard.CVC), isCardCVCorEmpty, false)
+	if cvc == "" {
+		newCard.CVC = oldCard.CVC
+	} else {
+		newCard.CVC = cvc
+	}
+	// tags
+	tagsJson, err := json.Marshal(oldCard.Tags)
+	if err != nil {
+		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
+		return
+	}
+	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
+	var tagsNew map[string]string
+	if tagsStr == "" {
+		tagsNew = oldCard.Tags
+	} else {
+		tagsNew, err = getTags(tagsStr)
+		if err != nil {
+			log.Printf("ERROR: cant convert tags %s\n", err.Error())
+			return
+		}
+	}
+	newCard.Tags = tagsNew
+
+	// converting new card to pdata
+	pdata, err := helpers.ToPdata("card", newCard, mstorage.MasterKey)
+	if err != nil {
+		log.Printf("ERROR: cant convert to pdata %s", err.Error())
+	}
+	pdata.ID = pdataID
+
+	// sending data to server
+	resp, err := gclient.Pdata.UpdatePdata(ctx, &pb.UpdatePdataRequest{Pdata: pdata})
+	if err != nil {
+		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
+		return
+	}
+	log.Println(resp.Response)
+
 }

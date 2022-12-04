@@ -87,7 +87,8 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 
 	// parsing input
 	pname := inputSelect("Upass name: ", pnames)
-	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
+	pdataID := entries[pname]
+	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -116,21 +117,22 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// Getting current upass
-	listResponse, err := gclient.Pdata.ListPdata(ctx, &pb.ListPdataRequest{Ptype: "upass"})
+	entries, err := listPnames(ctx, gclient, "card")
 	if err != nil {
-		log.Printf("ERROR: cant list pdata: %s\n", err.Error())
+		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any upass entries")
 		return
 	}
-	if len(listResponse.PdataEtnry) == 0 {
-		log.Println("you dont have any upass entries")
-		return
-	}
+
 	var pnames []string
-	for _, e := range listResponse.PdataEtnry {
-		pnames = append(pnames, e.Name)
+	for pname := range entries {
+		pnames = append(pnames, pname)
 	}
 	pname := inputSelect("Pname to update: ", pnames)
-	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{Pname: pname})
+	pdataID := entries[pname]
+	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return

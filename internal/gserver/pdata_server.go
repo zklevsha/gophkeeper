@@ -68,7 +68,7 @@ func (s *pdataServer) AddPdata(ctx context.Context, in *pb.AddPdataRequest) (*pb
 }
 
 func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb.GetPdataResponse, error) {
-	if in.Pname == "" {
+	if in.PdataID == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "pname is not set")
 	}
 	userID, err := s.getUserId(ctx)
@@ -77,13 +77,7 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 		return nil, status.Errorf(getCode(err), e)
 	}
 
-	pdataID, err := s.db.GetPdataID(userID, in.Pname)
-	if err != nil {
-		e := fmt.Sprintf("failed to get pdataid: %s", err.Error())
-		return nil, status.Errorf(getCode(err), e)
-	}
-
-	pdata, err := s.db.PrivateGet(userID, pdataID)
+	pdata, err := s.db.PrivateGet(userID, in.PdataID)
 	if err != nil {
 		e := fmt.Sprintf("failed to get pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -100,7 +94,7 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 		return nil, status.Error(codes.Internal, e)
 	}
 	pbPdata := pb.Pdata{
-		ID:      pdataID,
+		ID:      in.PdataID,
 		Pname:   pdata.Name,
 		Ptype:   pdata.Type,
 		KeyHash: keyHash,

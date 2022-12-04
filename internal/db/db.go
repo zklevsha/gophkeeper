@@ -249,36 +249,6 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (structs.Pdata, erro
 	}
 }
 
-// GetPrivateID returns private data ID by user_id and pname
-func (c *Connector) GetPdataID(userID int64, name string) (int64, error) {
-	err := c.checkInit()
-	if err != nil {
-		return -1, err
-	}
-
-	conn, err := c.Pool.Acquire(c.Ctx)
-	if err != nil {
-		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
-	}
-	defer conn.Release()
-
-	sql := `SELECT id
-			FROM private_data
-			WHERE user_id=$1 and name=$2`
-	row := conn.QueryRow(c.Ctx, sql, userID, name)
-	var ID int64
-	switch err := row.Scan(&ID); err {
-	case pgx.ErrNoRows:
-		return -1, structs.ErrPdataNotFound
-	case nil:
-		return ID, nil
-	default:
-		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
-		return -1, e
-	}
-
-}
-
 func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 	err := c.checkInit()
 	if err != nil {
