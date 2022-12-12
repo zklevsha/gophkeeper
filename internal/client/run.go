@@ -48,7 +48,16 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			cardUpdate(mstorage, ctx, gclient)
 		case "card-delete":
 			cardDelete(mstorage, ctx, gclient)
-			// Other
+		// Private string
+		case "pstring-add":
+			pstringCreate(mstorage, ctx, gclient)
+		case "pstring-get":
+			pstringGet(mstorage, ctx, gclient)
+		case "pstring-update":
+			pstringUpdate(mstorage, ctx, gclient)
+		case "pstring-delete":
+			pstringDelete(mstorage, ctx, gclient)
+		// Other
 		case "help":
 			help()
 		case "exit", "quit":

@@ -30,6 +30,13 @@ var cardCmds = map[string]string{
 	"card-delete": "delete card entry",
 }
 
+var pstringCmds = map[string]string{
+	"pstring-add":    "add private string entry",
+	"pstring-get":    "retrive private string entry",
+	"pstring-update": "update pstring  entry",
+	"pstring-delete": "delete pstring entry",
+}
+
 var otherCmds = map[string]string{
 	"help": "list all available commands",
 	"exit": "exit application",
@@ -53,6 +60,11 @@ func help() {
 
 	fmt.Println("Credit card commands")
 	for cmd, desc := range cardCmds {
+		log.Printf("\t* %s - %s", cmd, desc)
+	}
+
+	fmt.Println("Private sting commands")
+	for cmd, desc := range pstringCmds {
 		log.Printf("\t* %s - %s", cmd, desc)
 	}
 

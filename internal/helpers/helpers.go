@@ -44,6 +44,13 @@ func ToPdata(ptype string, input interface{}, key structs.MasterKey) (*pb.Pdata,
 		if err != nil {
 			return nil, fmt.Errorf("cant encode card: %s", err.Error())
 		}
+	case "pstring":
+		pstring := input.(structs.Pstring)
+		name = pstring.Name
+		encoded, err = json.Marshal(pstring)
+		if err != nil {
+			return nil, fmt.Errorf("cant encode pstring: %s", err.Error())
+		}
 	default:
 		return nil, fmt.Errorf("%s is not supported", ptype)
 	}
@@ -86,6 +93,13 @@ func FromPdata(pdata *pb.Pdata, key structs.MasterKey) (interface{}, error) {
 			return nil, fmt.Errorf("error cant decode card JSON to struct: %s", err.Error())
 		}
 		return card, nil
+	case "pstring":
+		var pstring structs.Pstring
+		err = json.Unmarshal(decrypted, &pstring)
+		if err != nil {
+			return nil, fmt.Errorf("error cant decode pstring json to struct: %s", err.Error())
+		}
+		return pstring, err
 	default:
 		return nil, fmt.Errorf("ptype: %s is not supported", pdata.Ptype)
 	}
