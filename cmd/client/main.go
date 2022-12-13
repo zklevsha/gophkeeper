@@ -11,6 +11,7 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 func main() {
@@ -21,16 +22,26 @@ func main() {
 	mstorage.MasterKeyDir = createKeyDir()
 
 	clientConfig := config.GetClientConfig(os.Args[1:])
-	// initiating connection to server
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: true,
+
+	var conn *grpc.ClientConn
+	var err error
+	if clientConfig.UseTLS {
+		tlsConfig := &tls.Config{
+			InsecureSkipVerify: true,
+		}
+		conn, err = grpc.Dial(clientConfig.ServerAddress,
+			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
+			grpc.WithUnaryInterceptor(client.GetUnaryClientInterceptor(&mstorage)))
+	} else {
+		conn, err = grpc.Dial(clientConfig.ServerAddress,
+			grpc.WithTransportCredentials(insecure.NewCredentials()),
+			grpc.WithUnaryInterceptor(client.GetUnaryClientInterceptor(&mstorage)))
+
 	}
-	conn, err := grpc.Dial(clientConfig.ServerAddress,
-		grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-		grpc.WithUnaryInterceptor(client.GetUnaryClientInterceptor(&mstorage)))
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
+
 	defer func() {
 		err := conn.Close()
 		if err != nil {

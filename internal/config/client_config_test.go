@@ -13,9 +13,9 @@ func TestClientConfig(t *testing.T) {
 		want ClientConfig
 	}{
 		{name: "no flags", args: []string{},
-			want: ClientConfig{ServerAddress: serverAddressDefault}},
-		{name: "all flags", args: []string{"-a", testServerAddress},
-			want: ClientConfig{ServerAddress: testServerAddress}},
+			want: ClientConfig{ServerAddress: serverAddressDefault, UseTLS: false}},
+		{name: "all flags", args: []string{"-a", testServerAddress, "-t"},
+			want: ClientConfig{ServerAddress: testServerAddress, UseTLS: true}},
 	}
 
 	for _, tc := range tt {

@@ -10,6 +10,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/reflection"
 )
 
@@ -42,7 +43,7 @@ func GetServer(db db.Connector, key string, certPath string, privatePath string)
 			grpc.Creds(tlsCredentials),
 		)
 	} else {
-		s = grpc.NewServer()
+		s = grpc.NewServer(grpc.Creds(insecure.NewCredentials()))
 	}
 
 	reflection.Register(s)

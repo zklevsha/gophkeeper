@@ -2,4 +2,4 @@ cmd/client/client
 cmd/server/server
 start_server.sh
 start_client.sh
-cert/
+certs/

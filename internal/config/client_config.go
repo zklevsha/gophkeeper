@@ -9,6 +9,7 @@ import (
 // ClientConfig represents client configuration
 type ClientConfig struct {
 	ServerAddress string
+	UseTLS        bool
 }
 
 // GetClientConfig parses env variables and
@@ -16,8 +17,10 @@ type ClientConfig struct {
 func GetClientConfig(args []string) ClientConfig {
 	var config ClientConfig
 	var addressF string
+	var useTLSf bool
 	f := flag.NewFlagSet("server", flag.ExitOnError)
 	f.StringVar(&addressF, "a", serverAddressDefault, "server address")
+	f.BoolVar(&useTLSf, "t", false, "use TLS when connection to server")
 	err := f.Parse(args)
 	if err != nil {
 		log.Fatalf("failed to parse flag parameters: %s",
@@ -30,6 +33,8 @@ func GetClientConfig(args []string) ClientConfig {
 	} else {
 		config.ServerAddress = addressF
 	}
+
+	config.UseTLS = useTLSf
 
 	return config
 }

@@ -8,9 +8,9 @@ pb :
 	protoc --proto_path=proto proto/*.proto --go_out=internal --go-grpc_out=internal
 
 lint:
-	go vet ./... 
-	staticcheck ./...  
-	errcheck ./... 
+	go vet ./...
+	staticcheck ./...
+	errcheck ./...
 	golint ./...
 
 db:
@@ -30,3 +30,12 @@ migrate_up:
 
 migrate_down:
 	migrate -database ${POSTGRESQL_URL} -path db/migrations down
+
+certs:
+	mkdir certs && \
+	echo "Generating CA cert and key" && \
+	openssl req -x509 -newkey rsa:4096 -days 365 -nodes -keyout certs/ca-key.pem -out certs/ca-cert.pem --subj "/C=RU/L=Moscow/O=Practicum/OU=Practicum/CN=CA server" && \
+	echo "Generate server key and sign request" && \
+	openssl req -newkey rsa:4096 -nodes -keyout certs/server-key.pem -out certs/server-req.pem -subj "/C=RU/L=Moscow/O=Practicum/OU=Practicum/CN=CA server" && \
+	echo "Generating servers cert" && \
+	openssl x509 -req -in certs/server-req.pem -days 120 -CA certs/ca-cert.pem -CAkey certs/ca-key.pem -CAcreateserial -out certs/server-cert.pem
