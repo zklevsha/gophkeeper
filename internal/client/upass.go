@@ -86,7 +86,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 	}
 
 	// parsing input
-	pname := inputSelect("Upass name: ", pnames)
+	pname := inputSelect("Upass name ", pnames)
 	pdataID := entries[pname]
 	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
@@ -227,7 +227,7 @@ func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		pnames = append(pnames, pname)
 	}
 
-	pname := inputSelect("Upass name: ", pnames)
+	pname := inputSelect("Upass name ", pnames)
 	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())

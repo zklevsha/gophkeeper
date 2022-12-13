@@ -75,7 +75,7 @@ func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs
 	}
 
 	// Getting pdata from server
-	pname := inputSelect("Card name: ", pnames)
+	pname := inputSelect("Card name", pnames)
 	pdataID := entries[pname]
 	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
@@ -124,7 +124,7 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("Card name: ", pnames)
+	pname := inputSelect("Card name", pnames)
 	pdataID := entries[pname]
 	getPdataResponse, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {

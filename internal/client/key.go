@@ -35,42 +35,42 @@ func kload(kpath string) (string, error) {
 	return string(b), nil
 }
 
-func keyGenerate(mstorage *structs.MemStorage) {
+func keyGenerate(mstorage *structs.MemStorage) error {
 	keyPath, err := kgenerate(mstorage.MasterKeyDir)
 	if err != nil {
-		log.Printf("cant create key file: %s", err.Error())
-		return
+		return fmt.Errorf("cant create key file: %s", err.Error())
 	}
 	log.Printf("key saved at %s", keyPath)
 	if getYN("Do you want lo load key?") == "Yes" {
-		keyLoad(keyPath, mstorage)
+		err = keyLoad(keyPath, mstorage)
+		return err
 	}
+	return nil
 }
 
-func keyLoad(kpath string, mstorage *structs.MemStorage) {
+func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 	if kpath == "" {
 		keys, err := listKeyDir(mstorage.MasterKeyDir)
 		if err != nil {
-			log.Printf("ERROR: cannot read keychain directory(%s): %s\n",
+			return fmt.Errorf("cannot read keychain directory(%s): %s",
 				mstorage.MasterKeyDir, err.Error())
-			return
+
 		}
 		if len(keys) == 0 {
 			log.Printf("you dont have any keychain directory(%s)", mstorage.MasterKeyDir)
 			if getYN("Do you want to generate one?") == "Yes" {
-				keyGenerate(mstorage)
+				return keyGenerate(mstorage)
 			}
-			return
 		}
 		kpath = inputSelect("Select key to load: ", keys)
 	}
 	key, err := kload(kpath)
 	if err != nil {
-		log.Printf("ERROR: cant load key: %s\n", err.Error())
-		return
+		return fmt.Errorf("cant load key: %s", err.Error())
 	}
 	mstorage.SetMasterKey(key, kpath)
 	log.Printf("key %s was loaded", kpath)
+	return nil
 }
 
 func keyPrint(mstorage *structs.MemStorage) {

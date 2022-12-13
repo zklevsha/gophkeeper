@@ -13,13 +13,6 @@ lint:
 	errcheck ./...
 	golint ./...
 
-db:
-	psql -U gophkeeper -d  gophkeeper  -f sql/schema.sql && \
-	psql -U gophkeeper -d  gophkeeper  -f sql/data.sql
-
-drop:
-	psql -U gophkeeper -d  gophkeeper  -f sql/drop.sql
-
 # dont forget to set env variable
 # export POSTGRESQL_URL='postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable'
 new_migration:

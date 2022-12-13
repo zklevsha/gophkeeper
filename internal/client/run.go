@@ -12,22 +12,44 @@ import (
 // Run starts client interactive promt
 func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 
-	fmt.Println("Welcome to gophkeeper")
-	fmt.Println("Enter 'help' to get list of available commands")
+	// setting up gk for user
 	ctx := context.Background()
+	setup(mstorage, ctx, gclient)
+
+	// infinite loop for interactive cli
 	for {
 		command := getInput("command: ", notEmpty, false)
 		switch command {
 		// Authentication
 		case "register":
-			register(ctx, gclient)
+			err := register(ctx, gclient)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
+			} else {
+				fmt.Printf("register succsessful")
+			}
 		case "login":
-			login(ctx, gclient, mstorage)
+			err := login(ctx, gclient, mstorage)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
+			} else {
+				fmt.Println("login succsessful")
+			}
 		// MasterKey
 		case "key-generate":
-			keyGenerate(mstorage)
+			err := keyGenerate(mstorage)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
+			} else {
+				fmt.Println("key-generate was successful")
+			}
 		case "key-load":
-			keyLoad("", mstorage)
+			err := keyLoad("", mstorage)
+			if err != nil {
+				fmt.Printf("ERROR: %s\n", err.Error())
+			} else {
+				fmt.Println("key-load succsessful")
+			}
 		case "key-print":
 			keyPrint(mstorage)
 		// Upass
@@ -69,4 +91,35 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 
 	}
 
+}
+
+// setup setups gk for user: login/register and loading/generating master key
+func setup(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+	log.Printf("Welcome to gophkeeper.\nLet`s set you up")
+
+	// Register/Login
+	answer := inputSelect("Do you want to register or log in?",
+		[]string{"register", "login"})
+	if answer == "register" {
+		log.Println("Registering:")
+		err := register(ctx, gclient)
+		if err != nil {
+			log.Fatalf("ERROR: %s", err.Error())
+		}
+	}
+	log.Println("Logging in:")
+	err := login(ctx, gclient, mstorage)
+	if err != nil {
+		log.Fatalf("ERROR: %s", err.Error())
+	}
+
+	// Load/Generate master key
+	log.Println("Loading master key")
+	err = keyLoad("", mstorage)
+	if err != nil {
+		log.Fatalf("ERROR: %s", err.Error())
+	}
+
+	log.Println("You are ready to go :)")
+	log.Println("Print `help` to list available commands")
 }

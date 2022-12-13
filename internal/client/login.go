@@ -2,42 +2,38 @@ package client
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
 func login(ctx context.Context, gclient *structs.Gclient,
-	mstorage *structs.MemStorage) {
+	mstorage *structs.MemStorage) error {
 	email := getInput("email:", isEmail, false)
 	password := getInput("password:", notEmpty, true)
 
 	user := pb.User{Email: email, Password: password}
 	resp, err := gclient.Auth.GetToken(ctx, &pb.GetTokenRequest{User: &user})
 	if err != nil {
-		log.Printf("ERROR cant get token: %s\n", err.Error())
-		return
+		return fmt.Errorf("cant get token: %s", err.Error())
 	}
 	mstorage.SetToken(resp.Token)
-	fmt.Println("login successful")
-
+	return nil
 }
 
-func register(ctx context.Context, gclient *structs.Gclient) {
+func register(ctx context.Context, gclient *structs.Gclient) error {
 	email := getInput("email:", isEmail, false)
 	password := getInput("password:", notEmpty, true)
 	paswordConfirm := getInput("password(confirm):", notEmpty, true)
 	if password != paswordConfirm {
-		fmt.Println("ERROR password mismatch")
-		return
+		return errors.New("password mismatch")
 	}
 	user := pb.User{Email: email, Password: password}
-	resp, err := gclient.Auth.Register(ctx, &pb.RegisterRequest{User: &user})
+	_, err := gclient.Auth.Register(ctx, &pb.RegisterRequest{User: &user})
 	if err != nil {
-		log.Printf("ERROR cant register %s\n", err.Error())
-		return
+		return fmt.Errorf("cant register %s", err.Error())
 	}
-	log.Printf("%s\n", resp.Response)
+	return nil
 }
