@@ -4,6 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"github.com/zklevsha/gophkeeper/internal/structs"
@@ -36,4 +38,22 @@ func listPnames(ctx context.Context, gclient *structs.Gclient, ptype string) (ma
 	}
 
 	return entries, nil
+}
+
+// listDir reads directory (non recurcevl) and returns full paths of files
+func listDir(dirPath string) ([]string, error) {
+	var files []string
+	fileInfo, err := os.ReadDir(dirPath)
+	if err != nil {
+		return files, err
+	}
+	for _, file := range fileInfo {
+		if !file.IsDir() {
+			fullPath := filepath.Join(dirPath, file.Name())
+			files = append(files, fullPath)
+
+		}
+
+	}
+	return files, nil
 }

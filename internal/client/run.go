@@ -35,6 +35,7 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			} else {
 				fmt.Println("login succsessful")
 			}
+
 		// MasterKey
 		case "key-generate":
 			err := keyGenerate(mstorage)
@@ -52,7 +53,8 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			}
 		case "key-print":
 			keyPrint(mstorage)
-		// Upass
+
+			// Upass
 		case "upass-add":
 			upassCreate(mstorage, ctx, gclient)
 		case "upass-get":
@@ -61,6 +63,7 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			upassUpdate(mstorage, ctx, gclient)
 		case "upass-delete":
 			upassDelete(mstorage, ctx, gclient)
+
 		// Credit card
 		case "card-add":
 			cardCreate(mstorage, ctx, gclient)
@@ -70,6 +73,7 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			cardUpdate(mstorage, ctx, gclient)
 		case "card-delete":
 			cardDelete(mstorage, ctx, gclient)
+
 		// Private string
 		case "pstring-add":
 			pstringCreate(mstorage, ctx, gclient)
@@ -79,6 +83,13 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			pstringUpdate(mstorage, ctx, gclient)
 		case "pstring-delete":
 			pstringDelete(mstorage, ctx, gclient)
+
+		// Private file
+		case "pfile-add":
+			pfileAdd(mstorage, ctx, gclient)
+		case "pfile-get":
+			pfileGet(mstorage, ctx, gclient)
+
 		// Other
 		case "help":
 			help()
@@ -95,7 +106,7 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 
 // setup setups gk for user: login/register and loading/generating master key
 func setup(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
-	log.Printf("Welcome to gophkeeper.\nLet`s set you up")
+	log.Printf("Welcome to gophkeeper. Let`s set you up")
 
 	// Register/Login
 	answer := inputSelect("Do you want to register or log in?",
@@ -106,12 +117,14 @@ func setup(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.G
 		if err != nil {
 			log.Fatalf("ERROR: %s", err.Error())
 		}
+		log.Panicln("Register succsessful.")
 	}
 	log.Println("Logging in:")
 	err := login(ctx, gclient, mstorage)
 	if err != nil {
 		log.Fatalf("ERROR: %s", err.Error())
 	}
+	log.Println("Login succsessful")
 
 	// Load/Generate master key
 	log.Println("Loading master key")

@@ -5,6 +5,7 @@ type MemStorage struct {
 	Token        string
 	MasterKey    MasterKey
 	MasterKeyDir string
+	PfilesDir    string
 }
 
 // SetToken sets/updates token

@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"path"
-	"path/filepath"
 	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
@@ -50,7 +49,7 @@ func keyGenerate(mstorage *structs.MemStorage) error {
 
 func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 	if kpath == "" {
-		keys, err := listKeyDir(mstorage.MasterKeyDir)
+		keys, err := listDir(mstorage.MasterKeyDir)
 		if err != nil {
 			return fmt.Errorf("cannot read keychain directory(%s): %s",
 				mstorage.MasterKeyDir, err.Error())
@@ -62,7 +61,7 @@ func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 				return keyGenerate(mstorage)
 			}
 		}
-		kpath = inputSelect("Select key to load: ", keys)
+		kpath = inputSelect("Select key to load", keys)
 	}
 	key, err := kload(kpath)
 	if err != nil {
@@ -75,21 +74,4 @@ func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 
 func keyPrint(mstorage *structs.MemStorage) {
 	log.Println(mstorage.MasterKey.Str())
-}
-
-func listKeyDir(keydir string) ([]string, error) {
-	var files []string
-	fileInfo, err := os.ReadDir(keydir)
-	if err != nil {
-		return files, err
-	}
-	for _, file := range fileInfo {
-		if !file.IsDir() {
-			fullPath := filepath.Join(keydir, file.Name())
-			files = append(files, fullPath)
-
-		}
-
-	}
-	return files, nil
 }

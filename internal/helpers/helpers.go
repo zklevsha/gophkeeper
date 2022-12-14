@@ -1,6 +1,8 @@
 package helpers
 
 import (
+	"bytes"
+	"encoding/gob"
 	"encoding/json"
 	"fmt"
 	"math/rand"
@@ -51,6 +53,16 @@ func ToPdata(ptype string, input interface{}, key structs.MasterKey) (*pb.Pdata,
 		if err != nil {
 			return nil, fmt.Errorf("cant encode pstring: %s", err.Error())
 		}
+	case "pfile":
+		pfile := input.(structs.Pfile)
+		name = pfile.Name
+		buf := bytes.Buffer{}
+		enc := gob.NewEncoder(&buf)
+		err := enc.Encode(pfile)
+		if err != nil {
+			return nil, fmt.Errorf("cant encode pfile: %s", err.Error())
+		}
+		encoded = buf.Bytes()
 	default:
 		return nil, fmt.Errorf("%s is not supported", ptype)
 	}
@@ -99,7 +111,15 @@ func FromPdata(pdata *pb.Pdata, key structs.MasterKey) (interface{}, error) {
 		if err != nil {
 			return nil, fmt.Errorf("error cant decode pstring json to struct: %s", err.Error())
 		}
-		return pstring, err
+		return pstring, nil
+	case "pfile":
+		var pfile structs.Pfile
+		dec := gob.NewDecoder(bytes.NewReader(decrypted))
+		err := dec.Decode(&pfile)
+		if err != nil {
+			return nil, fmt.Errorf("error cant decode to struct: %s", err.Error())
+		}
+		return pfile, nil
 	default:
 		return nil, fmt.Errorf("ptype: %s is not supported", pdata.Ptype)
 	}

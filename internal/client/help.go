@@ -37,6 +37,11 @@ var pstringCmds = map[string]string{
 	"pstring-delete": "delete pstring entry",
 }
 
+var pfileCmds = map[string]string{
+	"pfile-add": "add private file entry",
+	"pfile-get": "get private file entry",
+}
+
 var otherCmds = map[string]string{
 	"help": "list all available commands",
 	"exit": "exit application",
@@ -63,8 +68,13 @@ func help() {
 		log.Printf("\t* %s - %s", cmd, desc)
 	}
 
-	fmt.Println("Private sting commands")
+	fmt.Println("Private string commands")
 	for cmd, desc := range pstringCmds {
+		log.Printf("\t* %s - %s", cmd, desc)
+	}
+
+	fmt.Println("Private file commands")
+	for cmd, desc := range pfileCmds {
 		log.Printf("\t* %s - %s", cmd, desc)
 	}
 

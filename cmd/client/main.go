@@ -20,6 +20,7 @@ func main() {
 
 	mstorage := structs.MemStorage{}
 	mstorage.MasterKeyDir = createKeyDir()
+	mstorage.PfilesDir = createPfileDir()
 
 	clientConfig := config.GetClientConfig(os.Args[1:])
 
@@ -63,6 +64,20 @@ func createKeyDir() string {
 	err = os.MkdirAll(kpath, 0700)
 	if err != nil {
 		log.Fatalf("cant create keychain directory(%s): %s", kpath, err.Error())
+	}
+	return kpath
+}
+
+// createKeyDir creates private file directory (in needed) and returns its path
+func createPfileDir() string {
+	user_home, err := os.UserHomeDir()
+	if err != nil {
+		log.Fatalf("cant get user home directory: %s", err.Error())
+	}
+	kpath := path.Join(user_home, ".gk-pfiles")
+	err = os.MkdirAll(kpath, 0700)
+	if err != nil {
+		log.Fatalf("cant create pfile directory(%s): %s", kpath, err.Error())
 	}
 	return kpath
 }
