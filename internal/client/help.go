@@ -38,8 +38,10 @@ var pstringCmds = map[string]string{
 }
 
 var pfileCmds = map[string]string{
-	"pfile-add": "add private file entry",
-	"pfile-get": "get private file entry",
+	"pfile-add":    "add private file entry",
+	"pfile-get":    "get private file entry",
+	"pfile-update": "update private file entry",
+	"pfile-delete": "delete private file entry",
 }
 
 var otherCmds = map[string]string{

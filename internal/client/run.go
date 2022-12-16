@@ -89,6 +89,8 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 			pfileAdd(mstorage, ctx, gclient)
 		case "pfile-get":
 			pfileGet(mstorage, ctx, gclient)
+		case "pfile-update":
+			pfileUpdate(mstorage, ctx, gclient)
 
 		// Other
 		case "help":
