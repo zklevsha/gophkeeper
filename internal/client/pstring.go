@@ -204,6 +204,10 @@ func pstringDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 	}
 
 	pname := inputSelect("pstring name: ", pnames)
+	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
+		log.Println("Canceled")
+		return
+	}
 	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())

@@ -251,3 +251,38 @@ func loadFile(fpath string) ([]byte, error) {
 	}
 	return data, nil
 }
+
+// pfileDetele deletes pstring entry
+func pfileDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+	err := reqCheck(mstorage)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+
+	// getting list of available pnames
+	entries, err := listPnames(ctx, gclient, "pfile")
+	if err != nil {
+		log.Printf("ERROR: cant retrive list of existing pfile entries: %s", err.Error())
+	}
+	if len(entries) == 0 {
+		log.Printf("You dont have any pfile entries")
+		return
+	}
+	// parsing input
+	var pnames []string
+	for pname := range entries {
+		pnames = append(pnames, pname)
+	}
+	pname := inputSelect("pstring name: ", pnames)
+	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
+		log.Println("Canceled")
+		return
+	}
+	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	if err != nil {
+		log.Printf("ERROR: cant delete pdata: %s", err.Error())
+		return
+	}
+	log.Printf("pfile %s was deleted", pname)
+}

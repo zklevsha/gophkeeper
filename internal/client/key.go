@@ -40,7 +40,7 @@ func keyGenerate(mstorage *structs.MemStorage) error {
 		return fmt.Errorf("cant create key file: %s", err.Error())
 	}
 	log.Printf("key saved at %s", keyPath)
-	if getYN("Do you want lo load key?") == "Yes" {
+	if getYN("Do you want lo load key?") {
 		err = keyLoad(keyPath, mstorage)
 		return err
 	}
@@ -57,8 +57,10 @@ func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 		}
 		if len(keys) == 0 {
 			log.Printf("you dont have any keychain directory(%s)", mstorage.MasterKeyDir)
-			if getYN("Do you want to generate one?") == "Yes" {
+			if getYN("Do you want to generate one?") {
 				return keyGenerate(mstorage)
+			} else {
+				return nil
 			}
 		}
 		kpath = inputSelect("Select key to load", keys)

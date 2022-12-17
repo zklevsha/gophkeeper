@@ -233,6 +233,11 @@ func cardDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	}
 
 	pname := inputSelect("Card name: ", pnames)
+
+	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
+		log.Println("Canceled")
+		return
+	}
 	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete card: %s", err.Error())

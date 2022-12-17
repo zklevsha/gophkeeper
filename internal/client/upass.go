@@ -228,6 +228,10 @@ func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	pname := inputSelect("Upass name ", pnames)
+	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
+		log.Println("Canceled")
+		return
+	}
 	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())

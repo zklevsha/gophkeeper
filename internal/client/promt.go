@@ -11,7 +11,8 @@ import (
 
 type fn func(string) error
 
-func getYN(label string) string {
+// getYN returns true if user answered Yes and false otherwise
+func getYN(label string) bool {
 	prompt := promptui.Select{
 		Label: label,
 		Items: []string{"Yes", "No"},
@@ -20,7 +21,7 @@ func getYN(label string) string {
 	if err != nil {
 		log.Fatalf("Prompt failed %v\n", err)
 	}
-	return result
+	return result == "Yes"
 }
 
 func inputSelect(label string, items []string) string {
