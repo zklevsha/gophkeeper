@@ -27,7 +27,7 @@ migrate_down:
 certs:
 	mkdir certs && \
 	echo "Generating CA cert and key" && \
-	openssl req -x509 -newkey rsa:4096 -days 365 -nodes -keyout certs/ca-key.pem -out certs/ca-cert.pem --subj "/C=RU/L=Moscow/O=Practicum/OU=Practicum/CN=CA server" && \
+	openssl req -x509 -newkey rsa:4096 -days 365 -nodes -keyout certs/ca-key.pem -out certs/ca-cert.pem -subj "/C=RU/L=Moscow/O=Practicum/OU=Practicum/CN=CA server" && \
 	echo "Generate server key and sign request" && \
 	openssl req -newkey rsa:4096 -nodes -keyout certs/server-key.pem -out certs/server-req.pem -subj "/C=RU/L=Moscow/O=Practicum/OU=Practicum/CN=CA server" && \
 	echo "Generating servers cert" && \

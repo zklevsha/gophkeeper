@@ -102,7 +102,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 
 	upass_pretty, err := json.MarshalIndent(up, "", " ")
 	if err != nil {
-		log.Printf("ERROR cant encode upass JSON : %s\n", err.Error())
+		log.Printf("ERROR cant encode upass JSON: %s\n", err.Error())
 	} else {
 		log.Println(string(upass_pretty))
 	}
@@ -145,11 +145,11 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	up := cleaned.(structs.UPass)
 
 	// Parsing input
-	nameNew := getInput(fmt.Sprintf("Name: [%s]", up.Name), any, false)
+	nameNew := getInput(fmt.Sprintf("Name [%s]:", up.Name), any, false)
 	if nameNew == "" {
 		nameNew = up.Name
 	}
-	usernameNew := getInput(fmt.Sprintf("Username: [%s]", up.Username), any, false)
+	usernameNew := getInput(fmt.Sprintf("Username [%s]:", up.Username), any, false)
 	if usernameNew == "" {
 		usernameNew = up.Username
 	}
@@ -168,7 +168,7 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJson), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)

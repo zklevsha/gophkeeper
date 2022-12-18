@@ -141,35 +141,35 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	// getting new data from input
 	var newCard structs.Card
 	// name
-	name := getInput(fmt.Sprintf("name[%s]:", oldCard.Name), any, false)
+	name := getInput(fmt.Sprintf("Name [%s]:", oldCard.Name), any, false)
 	if name == "" {
 		newCard.Name = oldCard.Name
 	} else {
 		newCard.Name = name
 	}
 	// card number
-	number := getInput(fmt.Sprintf("number[%s]:", oldCard.Number), isCardNumberOrEmpty, false)
+	number := getInput(fmt.Sprintf("Number [%s]:", oldCard.Number), isCardNumberOrEmpty, false)
 	if number == "" {
 		newCard.Number = oldCard.Number
 	} else {
 		newCard.Number = number
 	}
 	// card holder
-	holder := getInput(fmt.Sprintf("holder(%s):", oldCard.Holder), isCardHolderOrEmpty, false)
+	holder := getInput(fmt.Sprintf("Holder [%s]:", oldCard.Holder), isCardHolderOrEmpty, false)
 	if holder == "" {
 		newCard.Holder = oldCard.Holder
 	} else {
 		newCard.Holder = holder
 	}
 	// card expiration date
-	expire := getInput(fmt.Sprintf("expire[%s]:", oldCard.Expire), isCardExpireOrEmpty, false)
+	expire := getInput(fmt.Sprintf("Expire [%s]:", oldCard.Expire), isCardExpireOrEmpty, false)
 	if expire == "" {
 		newCard.Expire = oldCard.Expire
 	} else {
 		newCard.Expire = expire
 	}
 	// card CVV/CVC number
-	cvc := getInput(fmt.Sprintf("CVV/CVC[%s]:)", oldCard.CVC), isCardCVCorEmpty, false)
+	cvc := getInput(fmt.Sprintf("CVV/CVC [%s]:)", oldCard.CVC), isCardCVCorEmpty, false)
 	if cvc == "" {
 		newCard.CVC = oldCard.CVC
 	} else {

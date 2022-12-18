@@ -129,11 +129,11 @@ func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 	pstring := cleaned.(structs.Pstring)
 
 	// Parsing input
-	nameNew := getInput(fmt.Sprintf("Name: [%s]", pstring.Name), any, false)
+	nameNew := getInput(fmt.Sprintf("Name [%s]:", pstring.Name), any, false)
 	if nameNew == "" {
 		nameNew = pstring.Name
 	}
-	stringNew := getInput(fmt.Sprintf("String: [%s]", pstring.String), any, false)
+	stringNew := getInput(fmt.Sprintf("String [%s]:", pstring.String), any, false)
 	if stringNew == "" {
 		stringNew = pstring.String
 	}
@@ -143,7 +143,7 @@ func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJson), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
