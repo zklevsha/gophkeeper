@@ -121,7 +121,7 @@ func setup(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.G
 		if err != nil {
 			log.Fatalf("ERROR: %s", err.Error())
 		}
-		log.Panicln("Register succsessful.")
+		log.Println("Register succsessful.")
 	}
 	log.Println("Logging in:")
 	err := login(ctx, gclient, mstorage)
