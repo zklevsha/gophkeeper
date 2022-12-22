@@ -7,7 +7,8 @@ import (
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
-	"github.com/zklevsha/gophkeeper/internal/structs"
+	"github.com/zklevsha/gophkeeper/internal/client"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 )
 
 // Connector encapsulates DB communication logic
@@ -46,7 +47,7 @@ func (c *Connector) Close() {
 }
 
 // Register adds user to database and returns new user`s id
-func (c *Connector) Register(user structs.User) (int64, error) {
+func (c *Connector) Register(user client.User) (int64, error) {
 	err := c.checkInit()
 	if err != nil {
 		return -1, err
@@ -66,7 +67,7 @@ func (c *Connector) Register(user structs.User) (int64, error) {
 		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
 	if counter != 0 {
-		return -1, structs.ErrUserAlreadyExists
+		return -1, errs.ErrUserAlreadyExists
 	}
 
 	// adding new user
@@ -138,35 +139,35 @@ func (c *Connector) DropTables() error {
 }
 
 // GetUser searches for user by email
-func (c *Connector) GetUser(email string) (structs.User, error) {
+func (c *Connector) GetUser(email string) (client.User, error) {
 	err := c.checkInit()
 	if err != nil {
-		return structs.User{}, err
+		return client.User{}, err
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
 	if err != nil {
-		return structs.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
+		return client.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 	defer conn.Release()
 
-	var user structs.User
+	var user client.User
 	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
 	row := conn.QueryRow(c.Ctx, usersSQL, email)
 
 	switch err := row.Scan(&user.ID, &user.Email, &user.Password); err {
 	case pgx.ErrNoRows:
-		return structs.User{}, structs.ErrUserAuth
+		return client.User{}, errs.ErrUserAuth
 	case nil:
 		return user, nil
 	default:
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
-		return structs.User{}, e
+		return client.User{}, e
 	}
 }
 
 // PrivateAdd adds private data in database for specific userID
-func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) (int64, error) {
+func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 	err := c.checkInit()
 	if err != nil {
 		return -1, err
@@ -199,7 +200,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) (int64, error)
 		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
 	if counter != 0 {
-		return -1, structs.ErrPdataAlreatyEsists
+		return -1, errs.ErrPdataAlreatyEsists
 	}
 
 	var id int64
@@ -216,16 +217,16 @@ func (c *Connector) PrivateAdd(userID int64, pdata structs.Pdata) (int64, error)
 }
 
 // PrivateGet retrive private data from database
-func (c *Connector) PrivateGet(userID int64, pdataID int64) (structs.Pdata, error) {
+func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
 
 	err := c.checkInit()
 	if err != nil {
-		return structs.Pdata{}, err
+		return Pdata{}, err
 	}
 
 	conn, err := c.Pool.Acquire(c.Ctx)
 	if err != nil {
-		return structs.Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
+		return Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
 	defer conn.Release()
 
@@ -236,20 +237,20 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (structs.Pdata, erro
 			WHERE a.id=$1 AND a.user_id=$2;`
 
 	row := conn.QueryRow(c.Ctx, sql, pdataID, userID)
-	var pdata = structs.Pdata{}
+	var pdata = Pdata{}
 
 	switch err = row.Scan(&pdata.ID, &pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData); err {
 	case pgx.ErrNoRows:
-		return structs.Pdata{}, structs.ErrPdataNotFound
+		return Pdata{}, errs.ErrPdataNotFound
 	case nil:
 		return pdata, nil
 	default:
 		e := fmt.Errorf("unknown error while accesing database: %s", err.Error())
-		return structs.Pdata{}, e
+		return Pdata{}, e
 	}
 }
 
-func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
+func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
 	err := c.checkInit()
 	if err != nil {
 		return err
@@ -272,7 +273,7 @@ func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 	}
 	rowsAffected := res.RowsAffected()
 	if rowsAffected == 0 {
-		return structs.ErrPdataNotFound
+		return errs.ErrPdataNotFound
 	}
 	if rowsAffected > 1 {
 		return fmt.Errorf("rows affected: %d", rowsAffected)
@@ -280,7 +281,7 @@ func (c *Connector) PrivateUpdate(userID int64, pdata structs.Pdata) error {
 	return nil
 }
 
-func (c *Connector) PrivateList(userID int64, ptype string) ([]structs.PdataEntry, error) {
+func (c *Connector) PrivateList(userID int64, ptype string) ([]PdataEntry, error) {
 	err := c.checkInit()
 	if err != nil {
 		return nil, err
@@ -303,9 +304,9 @@ func (c *Connector) PrivateList(userID int64, ptype string) ([]structs.PdataEntr
 		return nil, fmt.Errorf("db query error: %s", err.Error())
 	}
 
-	var pdataList []structs.PdataEntry
+	var pdataList []PdataEntry
 	for rows.Next() {
-		var entry structs.PdataEntry
+		var entry PdataEntry
 		err := rows.Scan(&entry.ID, &entry.Name)
 		if err != nil {
 			return nil, fmt.Errorf("row scan error: %s", err.Error())
@@ -342,7 +343,7 @@ func (c *Connector) PrivateDelete(userID int64, pdataID int64) error {
 	}
 	rowsAffected := res.RowsAffected()
 	if rowsAffected == 0 {
-		return structs.ErrPdataNotFound
+		return errs.ErrPdataNotFound
 	}
 	if rowsAffected > 1 {
 		return fmt.Errorf("oy vey, i`ve deleted %d rows", rowsAffected)

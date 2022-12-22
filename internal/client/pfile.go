@@ -10,16 +10,20 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
-// 1 MB
 const PFILE_MAX_SIZE = 1000000
 
+// Pfile represents user`s private file
+type Pfile struct {
+	Name string
+	Data []byte
+	Tags map[string]string
+}
+
 // pfileAdd sends pfile to server
-func pfileAdd(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pfileAdd(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -51,10 +55,10 @@ func pfileAdd(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 		return
 	}
 	pfileName := filepath.Base(pfilePath)
-	pfile := structs.Pfile{Name: pfileName, Data: data, Tags: tags}
+	pfile := Pfile{Name: pfileName, Data: data, Tags: tags}
 
 	// sending data to server
-	pdata, err := helpers.ToPdata("pfile", pfile, mstorage.MasterKey)
+	pdata, err := toPdata("pfile", pfile, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("cant convert pfile to pdata: %s", err.Error())
 		return
@@ -69,7 +73,7 @@ func pfileAdd(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 }
 
 // pfile retrrives user`s private file from server
-func pfileGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pfileGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -102,12 +106,12 @@ func pfileGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 	}
 
 	// decoding to pfile
-	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pdata: %s\n", err.Error())
 		return
 	}
-	pfile := cleaned.(structs.Pfile)
+	pfile := cleaned.(Pfile)
 
 	//saving pfile
 	pfileName := fmt.Sprintf("%s-%d", pfile.Name, time.Now().UnixNano())
@@ -134,7 +138,7 @@ func pfileGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 }
 
 // pfileUpdate update pfile entry
-func pfileUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pfileUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -161,12 +165,12 @@ func pfileUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := helpers.FromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert pdata to pfile: %s", err.Error())
 		return
 	}
-	pfileOld := cleaned.(structs.Pfile)
+	pfileOld := cleaned.(Pfile)
 
 	// getting list of local pfiles
 	pfiles, err := listDir(mstorage.PfilesDir)
@@ -216,8 +220,8 @@ func pfileUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// Sending new pfile to server
-	pfile := structs.Pfile{Name: pfileName, Data: data, Tags: tagsNew}
-	pdata, err := helpers.ToPdata("pfile", pfile, mstorage.MasterKey)
+	pfile := Pfile{Name: pfileName, Data: data, Tags: tagsNew}
+	pdata, err := toPdata("pfile", pfile, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("cant convert pfile to pdata: %s", err.Error())
 		return
@@ -253,7 +257,7 @@ func loadFile(fpath string) ([]byte, error) {
 }
 
 // pfileDetele deletes pstring entry
-func pfileDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pfileDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

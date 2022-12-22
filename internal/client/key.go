@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
 const keyLength = 32
@@ -34,7 +33,7 @@ func kload(kpath string) (string, error) {
 	return string(b), nil
 }
 
-func keyGenerate(mstorage *structs.MemStorage) error {
+func keyGenerate(mstorage *MemStorage) error {
 	keyPath, err := kgenerate(mstorage.MasterKeyDir)
 	if err != nil {
 		return fmt.Errorf("cant create key file: %s", err.Error())
@@ -47,7 +46,7 @@ func keyGenerate(mstorage *structs.MemStorage) error {
 	return nil
 }
 
-func keyLoad(kpath string, mstorage *structs.MemStorage) error {
+func keyLoad(kpath string, mstorage *MemStorage) error {
 	if kpath == "" {
 		keys, err := listDir(mstorage.MasterKeyDir)
 		if err != nil {
@@ -74,6 +73,6 @@ func keyLoad(kpath string, mstorage *structs.MemStorage) error {
 	return nil
 }
 
-func keyPrint(mstorage *structs.MemStorage) {
+func keyPrint(mstorage *MemStorage) {
 	log.Println(mstorage.MasterKey.Str())
 }

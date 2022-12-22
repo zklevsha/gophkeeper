@@ -5,12 +5,10 @@ import (
 	"fmt"
 	"log"
 	"os"
-
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
 // Run starts client interactive promt
-func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
+func Run(gclient *Gclient, mstorage *MemStorage) {
 
 	// setting up gk for user
 	ctx := context.Background()
@@ -109,7 +107,7 @@ func Run(gclient *structs.Gclient, mstorage *structs.MemStorage) {
 }
 
 // setup setups gk for user: login/register and loading/generating master key
-func setup(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func setup(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	log.Printf("Welcome to gophkeeper. Let`s set you up")
 
 	// Register/Login

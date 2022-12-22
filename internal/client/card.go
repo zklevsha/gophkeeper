@@ -6,13 +6,23 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
+// Card represents users Credit card entry
+type Card struct {
+	Name   string            `json:"name"`
+	Number string            `json:"number"`
+	Holder string            `json:"holder"`
+	Expire string            `json:"expire"`
+	CVC    string            `json:"cvv"`
+	Tags   map[string]string `json:"tags,omitempty"`
+}
+
+
+
 // cardCreate creates Credit card entry and sends it to server via gRPC
-func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func cardCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -33,11 +43,11 @@ func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	}
 
 	// converting to Pdata
-	card := structs.Card{
+	card := Card{
 		Name: name, Number: number,
 		Holder: holder, Expire: expire,
 		CVC: cvc, Tags: tags}
-	pdata, err := helpers.ToPdata("card", card, mstorage.MasterKey)
+	pdata, err := toPdata("card", card, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert to pdata %s", err.Error())
 	}
@@ -52,7 +62,7 @@ func cardCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 }
 
 // cardGet retreives Credit card entry from the server
-func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func cardGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -84,12 +94,12 @@ func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs
 	}
 
 	// decrypting and converting to Card struct
-	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode card: %s\n", err.Error())
 		return
 	}
-	card := cleaned.(structs.Card)
+	card := cleaned.(Card)
 
 	// print data
 	upass_pretty, err := json.MarshalIndent(card, "", " ")
@@ -101,7 +111,7 @@ func cardGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs
 }
 
 // cardUpdate Credit card entry from the server
-func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func cardUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -131,15 +141,15 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 		log.Printf("ERROR: cant get card entry: %s\n", err.Error())
 		return
 	}
-	cleaned, err := helpers.FromPdata(getPdataResponse.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(getPdataResponse.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode card: %s\n", err.Error())
 		return
 	}
-	oldCard := cleaned.(structs.Card)
+	oldCard := cleaned.(Card)
 
 	// getting new data from input
-	var newCard structs.Card
+	var newCard Card
 	// name
 	name := getInput(fmt.Sprintf("Name [%s]:", oldCard.Name), any, false)
 	if name == "" {
@@ -195,7 +205,7 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 	newCard.Tags = tagsNew
 
 	// converting new card to pdata
-	pdata, err := helpers.ToPdata("card", newCard, mstorage.MasterKey)
+	pdata, err := toPdata("card", newCard, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert to pdata %s", err.Error())
 	}
@@ -211,7 +221,7 @@ func cardUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 
 }
 
-func cardDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func cardDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

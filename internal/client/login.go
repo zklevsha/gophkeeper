@@ -6,11 +6,10 @@ import (
 	"fmt"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
-func login(ctx context.Context, gclient *structs.Gclient,
-	mstorage *structs.MemStorage) error {
+func login(ctx context.Context, gclient *Gclient,
+	mstorage *MemStorage) error {
 	email := getInput("email:", isEmail, false)
 	password := getInput("password:", notEmpty, true)
 
@@ -23,7 +22,7 @@ func login(ctx context.Context, gclient *structs.Gclient,
 	return nil
 }
 
-func register(ctx context.Context, gclient *structs.Gclient) error {
+func register(ctx context.Context, gclient *Gclient) error {
 	email := getInput("email:", isEmail, false)
 	password := getInput("password:", notEmpty, true)
 	paswordConfirm := getInput("password(confirm):", notEmpty, true)

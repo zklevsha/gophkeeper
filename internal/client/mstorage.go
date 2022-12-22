@@ -1,4 +1,4 @@
-package structs
+package client
 
 // MemStorage stores runtime state of client
 type MemStorage struct {

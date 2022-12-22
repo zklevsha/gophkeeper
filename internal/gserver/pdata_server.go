@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/zklevsha/gophkeeper/internal/db"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 	"github.com/zklevsha/gophkeeper/internal/jmanager"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
@@ -29,11 +29,11 @@ func (s *pdataServer) getUserId(ctx context.Context) (int64, error) {
 	}
 	token_raw, ok := md["authorization"]
 	if !ok {
-		return 0, structs.ErrNoToken
+		return 0, errs.ErrNoToken
 	}
 	token_parsed, err := jmanager.Validate(token_raw[0], s.key)
 	if err != nil {
-		return 0, structs.ErrInvalidToken
+		return 0, errs.ErrInvalidToken
 	}
 
 	return token_parsed.Claims.UserID, nil
@@ -46,7 +46,7 @@ func (s *pdataServer) AddPdata(ctx context.Context, in *pb.AddPdataRequest) (*pb
 		return nil, status.Errorf(codes.InvalidArgument, "pdata is nil")
 	}
 
-	pdata := structs.Pdata{
+	pdata := db.Pdata{
 		Name:        in.Pdata.Pname,
 		Type:        in.Pdata.Ptype,
 		KeyHash:     base64.StdEncoding.EncodeToString(in.Pdata.KeyHash),
@@ -112,7 +112,7 @@ func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
 	}
-	pdata := structs.Pdata{
+	pdata := db.Pdata{
 		ID:          in.Pdata.ID,
 		Name:        in.Pdata.Pname,
 		Type:        in.Pdata.Ptype,

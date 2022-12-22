@@ -1,4 +1,4 @@
-package structs
+package db
 
 // Pdata represendts raw and encrypted user`s private data
 // received from database

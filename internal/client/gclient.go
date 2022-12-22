@@ -3,10 +3,24 @@ package client
 import (
 	"context"
 
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/metadata"
+
+	"github.com/zklevsha/gophkeeper/internal/pb"
 )
+
+// Gclient represents collection of various gRPC clients
+type Gclient struct {
+	Auth  pb.AuthClient
+	Pdata pb.PrivateDataClient
+}
+
+func NewGclient(conn *grpc.ClientConn) Gclient {
+	return Gclient{
+		Auth:  pb.NewAuthClient(conn),
+		Pdata: pb.NewPrivateDataClient(conn)}
+}
+
 
 // list of RPC that not required authorization
 var noAuth = map[string]bool{
@@ -15,7 +29,7 @@ var noAuth = map[string]bool{
 }
 
 // GetUnaryClientInterceptor returns a client interceptor
-func GetUnaryClientInterceptor(mstorage *structs.MemStorage) grpc.UnaryClientInterceptor {
+func GetUnaryClientInterceptor(mstorage *MemStorage) grpc.UnaryClientInterceptor {
 	return func(
 		ctx context.Context,
 		method string,

@@ -6,13 +6,18 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
+// PricateString represents user`s private string
+type Pstring struct {
+	Name   string            `json:"name"`
+	String string            `json:"string"`
+	Tags   map[string]string `json:"tags,omitempty"`
+}
+
 // pstringCreate creates private string and sends it to server
-func pstringCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pstringCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -29,8 +34,8 @@ func pstringCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 	}
 
 	// converting to Pdata
-	pstring := structs.Pstring{Name: name, String: string, Tags: tags}
-	pdata, err := helpers.ToPdata("pstring", pstring, mstorage.MasterKey)
+	pstring := Pstring{Name: name, String: string, Tags: tags}
+	pdata, err := toPdata("pstring", pstring, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert pstring to pdata: %s\n", err.Error())
 		return
@@ -46,7 +51,7 @@ func pstringCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 }
 
 // pstringGet retrives private string and sends it to server
-func pstringGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pstringGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -76,12 +81,12 @@ func pstringGet(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 		return
 	}
 
-	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pstring: %s\n", err.Error())
 		return
 	}
-	pstring := cleaned.(structs.Pstring)
+	pstring := cleaned.(Pstring)
 
 	pstring_pretty, err := json.MarshalIndent(pstring, "", " ")
 	if err != nil {
@@ -93,7 +98,7 @@ func pstringGet(mstorage *structs.MemStorage, ctx context.Context, gclient *stru
 }
 
 // pstringUpdate updates pstring entry
-func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pstringUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -121,12 +126,12 @@ func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := helpers.FromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pstring: %s\n", err.Error())
 		return
 	}
-	pstring := cleaned.(structs.Pstring)
+	pstring := cleaned.(Pstring)
 
 	// Parsing input
 	nameNew := getInput(fmt.Sprintf("Name [%s]:", pstring.Name), any, false)
@@ -156,11 +161,11 @@ func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 	}
 
 	// Convering to pdata
-	pstringNew := structs.Pstring{
+	pstringNew := Pstring{
 		Name:   nameNew,
 		String: stringNew,
 		Tags:   tagsNew}
-	pdataNew, err := helpers.ToPdata("pstring", pstringNew, mstorage.MasterKey)
+	pdataNew, err := toPdata("pstring", pstringNew, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert new pstring to pdata: %s\n", err.Error())
 		return
@@ -182,7 +187,7 @@ func pstringUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *s
 }
 
 // pstringDelete deletes pstring entry
-func pstringDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func pstringDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

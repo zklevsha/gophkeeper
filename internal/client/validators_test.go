@@ -3,7 +3,7 @@ package client
 import (
 	"testing"
 
-	"github.com/zklevsha/gophkeeper/internal/structs"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 )
 
 func TestIsEmpty(t *testing.T) {
@@ -14,7 +14,7 @@ func TestIsEmpty(t *testing.T) {
 		want  error
 	}{
 		{name: "input empty", input: "",
-			want: structs.ErrEmptyInput},
+			want: errs.ErrEmptyInput},
 		{name: "input is not empty", input: "string",
 			want: nil},
 	}
@@ -39,9 +39,9 @@ func TestIsEmail(t *testing.T) {
 		{name: "good email", input: "test@test.ru",
 			want: nil},
 		{name: "bad email b@ad", input: "string",
-			want: structs.ErrInvalidEmail},
+			want: errs.ErrInvalidEmail},
 		{name: "empty input", input: "",
-			want: structs.ErrInvalidEmail},
+			want: errs.ErrInvalidEmail},
 	}
 
 	for _, tc := range tt {
@@ -64,9 +64,9 @@ func TestIsCartNumber(t *testing.T) {
 		{name: "good card", input: "4444 4444 4444 4444",
 			want: nil},
 		{name: "bad card", input: "123 31 dldsl3 11",
-			want: structs.ErrInvalidCardNumber},
+			want: errs.ErrInvalidCardNumber},
 		{name: "empty input", input: "",
-			want: structs.ErrInvalidCardNumber},
+			want: errs.ErrInvalidCardNumber},
 	}
 
 	for _, tc := range tt {
@@ -89,7 +89,7 @@ func TestIsCartNumberOrEmpty(t *testing.T) {
 		{name: "good card", input: "4444 4444 4444 4444",
 			want: nil},
 		{name: "bad card", input: "123 31 dldsl3 11",
-			want: structs.ErrInvalidCardNumber},
+			want: errs.ErrInvalidCardNumber},
 		{name: "empty input", input: "",
 			want: nil},
 	}
@@ -114,9 +114,9 @@ func TestIsCardHolder(t *testing.T) {
 		{name: "good holder", input: "JACK WHITE",
 			want: nil},
 		{name: "bad holder", input: "BOB ivan",
-			want: structs.ErrInvalidCardHolder},
+			want: errs.ErrInvalidCardHolder},
 		{name: "empty input", input: "",
-			want: structs.ErrInvalidCardHolder},
+			want: errs.ErrInvalidCardHolder},
 	}
 
 	for _, tc := range tt {
@@ -139,7 +139,7 @@ func TestIsCardHolderOrEmpty(t *testing.T) {
 		{name: "good holder", input: "JACK WHITE",
 			want: nil},
 		{name: "bad holder", input: "BOB ivan",
-			want: structs.ErrInvalidCardHolder},
+			want: errs.ErrInvalidCardHolder},
 		{name: "empty input", input: "",
 			want: nil},
 	}
@@ -164,9 +164,9 @@ func TestIsCardExpire(t *testing.T) {
 		{name: "good expire", input: "11/22",
 			want: nil},
 		{name: "bad expire", input: "100/1",
-			want: structs.ErrInvalidCardExpire},
+			want: errs.ErrInvalidCardExpire},
 		{name: "empty input", input: "",
-			want: structs.ErrInvalidCardExpire},
+			want: errs.ErrInvalidCardExpire},
 	}
 
 	for _, tc := range tt {
@@ -189,7 +189,7 @@ func TestIsCardExpireOrEmpty(t *testing.T) {
 		{name: "good expire", input: "11/22",
 			want: nil},
 		{name: "bad expire", input: "100/1",
-			want: structs.ErrInvalidCardExpire},
+			want: errs.ErrInvalidCardExpire},
 		{name: "empty input", input: "",
 			want: nil},
 	}
@@ -214,9 +214,9 @@ func TestIsCardCVC(t *testing.T) {
 		{name: "good CVC", input: "162",
 			want: nil},
 		{name: "bad CVC", input: "1000",
-			want: structs.ErrInvalidCardCVV},
+			want: errs.ErrInvalidCardCVV},
 		{name: "empty input", input: "",
-			want: structs.ErrInvalidCardCVV},
+			want: errs.ErrInvalidCardCVV},
 	}
 
 	for _, tc := range tt {
@@ -239,7 +239,7 @@ func TestIsCardCVCorEmpty(t *testing.T) {
 		{name: "good CVC", input: "162",
 			want: nil},
 		{name: "bad CVC", input: "1000",
-			want: structs.ErrInvalidCardCVV},
+			want: errs.ErrInvalidCardCVV},
 		{name: "empty input", input: "",
 			want: nil},
 	}

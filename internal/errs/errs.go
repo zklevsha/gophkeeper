@@ -1,4 +1,5 @@
-package structs
+// errs contains all custo, errors used in this project
+package errs
 
 import "errors"
 

@@ -1,4 +1,4 @@
-package structs
+package client
 
 import (
 	"crypto/sha256"

@@ -6,10 +6,10 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/db"
 	"github.com/zklevsha/gophkeeper/internal/jmanager"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"golang.org/x/crypto/bcrypt"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -34,7 +34,7 @@ func (s *authServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 		return nil, status.Errorf(codes.Internal, e)
 	}
 
-	user := structs.User{Email: in.User.Email, Password: string(encPass)}
+	user := client.User{Email: in.User.Email, Password: string(encPass)}
 
 	id, err := s.db.Register(user)
 	if err != nil {

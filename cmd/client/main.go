@@ -8,7 +8,6 @@ import (
 
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/config"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
@@ -18,7 +17,7 @@ func main() {
 	// removing timestamps from the output
 	log.SetFlags(0)
 
-	mstorage := structs.MemStorage{}
+	mstorage := client.MemStorage{}
 	mstorage.MasterKeyDir = createKeyDir()
 	mstorage.PfilesDir = createPfileDir()
 
@@ -49,7 +48,7 @@ func main() {
 			log.Fatal(err)
 		}
 	}()
-	gclient := structs.NewGclient(conn)
+	gclient := client.NewGclient(conn)
 	// starting interactive loop
 	client.Run(&gclient, &mstorage)
 }

@@ -1,4 +1,4 @@
-package structs
+package db
 
 // PdataEntry represents single Pdata entry that returned by
 // db.PdataList

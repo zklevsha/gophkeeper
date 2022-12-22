@@ -5,8 +5,8 @@ import (
 	"log"
 
 	"github.com/zklevsha/gophkeeper/internal/db"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials"
@@ -56,11 +56,11 @@ func GetServer(db db.Connector, key string, certPath string, privatePath string)
 // getCode returns gRCP error code based on error type
 func getCode(e error) codes.Code {
 	switch e {
-	case structs.ErrUserAlreadyExists, structs.ErrPdataAlreatyEsists:
+	case errs.ErrUserAlreadyExists, errs.ErrPdataAlreatyEsists:
 		return codes.AlreadyExists
-	case structs.ErrUserAuth, structs.ErrInvalidToken, structs.ErrNoToken:
+	case errs.ErrUserAuth, errs.ErrInvalidToken, errs.ErrNoToken:
 		return codes.Unauthenticated
-	case structs.ErrPdataNotFound:
+	case errs.ErrPdataNotFound:
 		return codes.NotFound
 	default:
 		return codes.Internal

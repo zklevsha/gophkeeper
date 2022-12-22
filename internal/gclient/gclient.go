@@ -1,8 +1,9 @@
-package structs
+package gclient
 
 import (
-	"github.com/zklevsha/gophkeeper/internal/pb"
 	"google.golang.org/grpc"
+
+	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
 // Gclient represents collection of various gRPC clients

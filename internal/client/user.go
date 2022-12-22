@@ -1,4 +1,4 @@
-package structs
+package client
 
 // User represents user registered in the system
 type User struct {

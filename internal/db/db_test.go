@@ -12,9 +12,10 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/enc"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 	"github.com/zklevsha/gophkeeper/internal/helpers"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
 const dsn = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
@@ -60,19 +61,19 @@ func tearDown(c Connector) {
 	}
 }
 
-func pdataConvert(ptype string, pname string, input interface{}) (structs.Pdata, error) {
-	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
+func pdataConvert(ptype string, pname string, input interface{}) (Pdata, error) {
+	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
 	masterKey.SetHash()
 
 	pdataBytes, err := json.Marshal(input)
 	if err != nil {
-		return structs.Pdata{}, fmt.Errorf("cant marshall upass: %s", err.Error())
+		return Pdata{}, fmt.Errorf("cant marshall upass: %s", err.Error())
 	}
 	upassEnc, err := enc.EncryptAES(pdataBytes, []byte(masterKey.Key))
 	if err != nil {
-		return structs.Pdata{}, fmt.Errorf("cant encrypt upass: %s", err.Error())
+		return Pdata{}, fmt.Errorf("cant encrypt upass: %s", err.Error())
 	}
-	pdata := structs.Pdata{
+	pdata := Pdata{
 		Name:        pname,
 		Type:        ptype,
 		KeyHash:     base64.StdEncoding.EncodeToString(masterKey.KeyHash[:]),
@@ -88,7 +89,7 @@ func TestRegister(t *testing.T) {
 
 	// run tests
 	t.Run("Register", func(t *testing.T) {
-		user := structs.User{Email: "vasa@test.ru", Password: "test"}
+		user := client.User{Email: "vasa@test.ru", Password: "test"}
 		id, err := c.Register(user)
 		if err != nil {
 			t.Fatalf("Register() have returned an error: %s", err.Error())
@@ -120,7 +121,7 @@ func TestGetUser(t *testing.T) {
 	defer tearDown(c)
 
 	// Get user that exists
-	want := structs.User{Email: "vasya@test.ru", Password: "secret"}
+	want := client.User{Email: "vasya@test.ru", Password: "secret"}
 	id, err := c.Register(want)
 	if err != nil {
 		t.Fatalf("cant register new user: %s", err.Error())
@@ -136,7 +137,7 @@ func TestGetUser(t *testing.T) {
 
 	// Get user that does`t exists
 	_, err = c.GetUser("john")
-	if !errors.Is(err, structs.ErrUserAuth) {
+	if !errors.Is(err, errs.ErrUserAuth) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
 }
@@ -146,16 +147,16 @@ func TestAddPrivate(t *testing.T) {
 	c := setUp()
 	defer c.Close()
 	defer tearDown(c)
-	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
-	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
 	masterKey.SetHash()
 
 	// setup for Upass
-	upass := structs.UPass{Username: "user",
+	upass := client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err := pdataConvert("upass", "upass_test", upass)
 	if err != nil {
@@ -165,7 +166,7 @@ func TestAddPrivate(t *testing.T) {
 	// TestCases
 	tt := []struct {
 		name  string
-		pdata structs.Pdata
+		pdata Pdata
 	}{
 		{name: "Test UPass",
 			pdata: pdata,
@@ -187,16 +188,16 @@ func TestGetPrivate(t *testing.T) {
 	c := setUp()
 	defer c.Close()
 	defer tearDown(c)
-	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
-	masterKey := structs.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
 	masterKey.SetHash()
 
 	// setup for Upass
-	upass := structs.UPass{Username: "user",
+	upass := client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err := pdataConvert("upass", "upass_test", upass)
 	if err != nil {
@@ -211,7 +212,7 @@ func TestGetPrivate(t *testing.T) {
 	// TestCases
 	tt := []struct {
 		name string
-		want structs.Pdata
+		want Pdata
 	}{
 		{
 			name: "Test UPass",
@@ -239,7 +240,7 @@ func TestUpdatePrivate(t *testing.T) {
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -247,7 +248,7 @@ func TestUpdatePrivate(t *testing.T) {
 
 	// setup for Upass
 	//before
-	upassBefore := structs.UPass{Name: "before", Username: "user",
+	upassBefore := client.UPass{Name: "before", Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdataBefore, err := pdataConvert("upass", "upass_test", upassBefore)
 	if err != nil {
@@ -259,7 +260,7 @@ func TestUpdatePrivate(t *testing.T) {
 	}
 	pdataBefore.ID = privateID
 	// after
-	upassAfter := structs.UPass{Name: "after", Username: "userNew",
+	upassAfter := client.UPass{Name: "after", Username: "userNew",
 		Password: "passwordNew", Tags: map[string]string{"test": "testNew"}}
 	pdataAfter, err := pdataConvert("upass", "upass_test", upassAfter)
 	if err != nil {
@@ -269,7 +270,7 @@ func TestUpdatePrivate(t *testing.T) {
 
 	tt := []struct {
 		name string
-		want structs.Pdata
+		want Pdata
 	}{
 		{
 			name: "Update UPass",
@@ -302,7 +303,7 @@ func TestPrivateList(t *testing.T) {
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -310,7 +311,7 @@ func TestPrivateList(t *testing.T) {
 
 	// adding first Pdata
 	pnameFirst := "upass1"
-	upass := structs.UPass{Username: "user",
+	upass := client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err := pdataConvert("upass", pnameFirst, upass)
 	if err != nil {
@@ -323,7 +324,7 @@ func TestPrivateList(t *testing.T) {
 
 	// adding second pdata
 	pnameSecond := "upass2"
-	upass = structs.UPass{Username: "user",
+	upass = client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err = pdataConvert("upass", pnameSecond, upass)
 	if err != nil {
@@ -338,12 +339,12 @@ func TestPrivateList(t *testing.T) {
 	tt := []struct {
 		name  string
 		ptype string
-		want  []structs.PdataEntry
+		want  []PdataEntry
 	}{
 		{
 			name:  "Test Upass",
 			ptype: "upass",
-			want: []structs.PdataEntry{
+			want: []PdataEntry{
 				{Name: pnameFirst, ID: pdataFirstID},
 				{Name: pnameSecond, ID: pdataSecondID},
 			},
@@ -378,14 +379,14 @@ func TestPdataDelete(t *testing.T) {
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(structs.User{Email: "vasya@test.ru",
+	userID, err := c.Register(client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
 
 	// adding another user
-	userIDSecond, err := c.Register(structs.User{Email: "petya@test.ru",
+	userIDSecond, err := c.Register(client.User{Email: "petya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -393,7 +394,7 @@ func TestPdataDelete(t *testing.T) {
 
 	// adding test Pdata
 	pnameFirst := "upass_test"
-	upass := structs.UPass{Username: "user",
+	upass := client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err := pdataConvert("upass", pnameFirst, upass)
 	if err != nil {
@@ -406,7 +407,7 @@ func TestPdataDelete(t *testing.T) {
 
 	// adding Pdata of second user
 	pnameSecond := "upass_second"
-	upass = structs.UPass{Username: "user",
+	upass = client.UPass{Username: "user",
 		Password: "password", Tags: map[string]string{"test": "test"}}
 	pdata, err = pdataConvert("upass", pnameSecond, upass)
 	if err != nil {
@@ -425,7 +426,7 @@ func TestPdataDelete(t *testing.T) {
 
 	// Case2 : getting notexistent pdata
 	err = c.PrivateDelete(userID, 99)
-	if !errors.Is(err, structs.ErrPdataNotFound) {
+	if !errors.Is(err, errs.ErrPdataNotFound) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
 
@@ -434,7 +435,7 @@ func TestPdataDelete(t *testing.T) {
 	if err == nil {
 		t.Error("User one can delete pdata of second user")
 	}
-	if !errors.Is(err, structs.ErrPdataNotFound) {
+	if !errors.Is(err, errs.ErrPdataNotFound) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
 }

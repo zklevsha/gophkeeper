@@ -8,11 +8,18 @@ import (
 
 	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/pb"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 )
 
+type UPass struct {
+	Name     string            `json:"name"`
+	Username string            `json:"username"`
+	Password string            `json:"password"`
+	Tags     map[string]string `json:"tags,omitempty"`
+}
+
+
 // upassCreate  creates UserPassword entry and sends it to server via gRPC
-func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func upassCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -43,12 +50,12 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// converting to Pdata
-	upass := structs.UPass{
+	upass := UPass{
 		Name:     pname,
 		Username: username,
 		Password: password,
 		Tags:     tags}
-	pdata, err := helpers.ToPdata("upass", upass, mstorage.MasterKey)
+	pdata, err := toPdata("upass", upass, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("canntot convert to Pdata: %s", err.Error())
 	}
@@ -64,7 +71,7 @@ func upassCreate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 }
 
 // upassGet retrives Upass from gRPC server
-func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func upassGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -94,11 +101,11 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 		return
 	}
 
-	cleaned, err := helpers.FromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
 	}
-	up := cleaned.(structs.UPass)
+	up := cleaned.(UPass)
 
 	upass_pretty, err := json.MarshalIndent(up, "", " ")
 	if err != nil {
@@ -109,7 +116,7 @@ func upassGet(mstorage *structs.MemStorage, ctx context.Context, gclient *struct
 
 }
 
-func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func upassUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -137,12 +144,12 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := helpers.FromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
 		return
 	}
-	up := cleaned.(structs.UPass)
+	up := cleaned.(UPass)
 
 	// Parsing input
 	nameNew := getInput(fmt.Sprintf("Name [%s]:", up.Name), any, false)
@@ -181,11 +188,11 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	}
 
 	// Convering to pdata
-	upNew := structs.UPass{Name: nameNew,
+	upNew := UPass{Name: nameNew,
 		Username: usernameNew,
 		Password: passwordNew,
 		Tags:     tagsNew}
-	pdataNew, err := helpers.ToPdata("upass", upNew, mstorage.MasterKey)
+	pdataNew, err := toPdata("upass", upNew, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert new upass to pdata: %s\n", err.Error())
 		return
@@ -206,7 +213,7 @@ func upassUpdate(mstorage *structs.MemStorage, ctx context.Context, gclient *str
 	log.Println(updateResp.Response)
 }
 
-func upassDelete(mstorage *structs.MemStorage, ctx context.Context, gclient *structs.Gclient) {
+func upassDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

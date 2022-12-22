@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/zklevsha/gophkeeper/internal/jmanager"
-	"github.com/zklevsha/gophkeeper/internal/structs"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
@@ -40,21 +39,21 @@ func GetUnaryServerInterceptor(jwtKey string) grpc.UnaryServerInterceptor {
 }
 
 // parseJWT  checks JWT and parses it
-func parseJTW(ctx context.Context, jwtKey string) (structs.Jtoken, error) {
+func parseJTW(ctx context.Context, jwtKey string) (jmanager.Jtoken, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
-		return structs.Jtoken{}, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
+		return jmanager.Jtoken{}, status.Errorf(codes.InvalidArgument, "Retrieving metadata is failed")
 	}
 
 	authHeader, ok := md["authorization"]
 	if !ok {
-		return structs.Jtoken{}, status.Errorf(codes.Unauthenticated, "Authorization token is not supplied")
+		return jmanager.Jtoken{}, status.Errorf(codes.Unauthenticated, "Authorization token is not supplied")
 	}
 
 	token, err := jmanager.Validate(authHeader[0], jwtKey)
 
 	if err != nil {
-		return structs.Jtoken{}, status.Errorf(codes.Unauthenticated, err.Error())
+		return jmanager.Jtoken{}, status.Errorf(codes.Unauthenticated, err.Error())
 	}
 	return token, nil
 }

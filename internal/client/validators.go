@@ -6,7 +6,7 @@ import (
 	"net/mail"
 	"regexp"
 
-	"github.com/zklevsha/gophkeeper/internal/structs"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 )
 
 func any(input string) error {
@@ -15,7 +15,7 @@ func any(input string) error {
 
 func notEmpty(input string) error {
 	if len(input) <= 0 {
-		return structs.ErrEmptyInput
+		return errs.ErrEmptyInput
 	}
 	return nil
 }
@@ -23,7 +23,7 @@ func notEmpty(input string) error {
 func isEmail(input string) error {
 	_, err := mail.ParseAddress(input)
 	if err != nil {
-		return structs.ErrInvalidEmail
+		return errs.ErrInvalidEmail
 	}
 	return nil
 }
@@ -43,7 +43,7 @@ func isCardNumber(input string) error {
 		return fmt.Errorf("matchString have returned an error: %s", err.Error())
 	}
 	if !matched {
-		return structs.ErrInvalidCardNumber
+		return errs.ErrInvalidCardNumber
 	}
 	return nil
 }
@@ -61,7 +61,7 @@ func isCardHolder(input string) error {
 		return fmt.Errorf("matchString have returned an error: %s", err.Error())
 	}
 	if !matched {
-		return structs.ErrInvalidCardHolder
+		return errs.ErrInvalidCardHolder
 	}
 	return nil
 }
@@ -79,7 +79,7 @@ func isCardExire(input string) error {
 		return fmt.Errorf("matchString have returned an error: %s", err.Error())
 	}
 	if !matched {
-		return structs.ErrInvalidCardExpire
+		return errs.ErrInvalidCardExpire
 	}
 	return nil
 }
@@ -97,7 +97,7 @@ func isCardCVC(input string) error {
 		return fmt.Errorf("matchString have returned an error: %s", err.Error())
 	}
 	if !matched {
-		return structs.ErrInvalidCardCVV
+		return errs.ErrInvalidCardCVV
 	}
 	return nil
 }
