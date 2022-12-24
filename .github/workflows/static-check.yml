@@ -15,6 +15,9 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
+      - name: installing linters
+        run: |
+          make lint_install
       - name: Run statictests
         run: |
           make lint

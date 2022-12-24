@@ -7,13 +7,30 @@ client:
 pb :
 	protoc --proto_path=proto proto/*.proto --go_out=internal --go-grpc_out=internal
 
+
+lint_install:
+	go install honnef.co/go/tools/cmd/staticcheck@latest
+	go install github.com/kisielk/errcheck@latest
+	go install golang.org/x/lint/golint@latest
+
+
+# don`t forget to run make lint_install beforehand
 lint:
 	go vet ./...
 	staticcheck ./...
 	errcheck ./...
 	golint ./...
 
-# dont forget to set env variable
+
+
+make migrate_install:
+	curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz -C  ${GOPATH}/bin
+
+
+
+
+# dont forget to install migrate binary (make migrate_install)
+# and  set env variable
 # export POSTGRESQL_URL='postgres://<username>:<password>@localhost:5432/<dbname>?sslmode=disable'
 new_migration:
 	migrate create -ext sql -dir db/migrations -seq $(name)

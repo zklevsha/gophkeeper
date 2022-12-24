@@ -144,7 +144,22 @@ cmd/server/server -d postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper 
     ```
     ( db используется непосредственно сервером, db_test используется для юнит тестов)
 
-4. Запустить миграции баз данных
+
+4. Установить инструмент миграции БД
+    ```bash
+    [kzhukov@fedora gophkeeper]$ make  make migrate_install
+    curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz -C  /home/kzhukov/go/bin
+    % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                    Dload  Upload   Total   Spent    Left  Speed
+    0     0    0     0    0     0      0      0 --:--:-- --:--:-- --:--:--     0
+    0 9270k    0 81121    0     0  50900      0  0:03:06  0:00:01  0:03:05 50900
+    LICENSE
+    README.md
+    migrate
+    100 9270k  100 9270k    0     0   815k      0  0:00:11  0:00:11 --:--:--  843k
+    ```
+
+5. Запустить миграции баз данных
     ```bash
     kzhukov@fedora gophkeeper]$ source .env && make migrate_up
     migrate -database postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper?sslmode=disable -path db/migrations up
@@ -156,13 +171,13 @@ cmd/server/server -d postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper 
     6/u private_types_add_pfile_type (129.026149ms)
     ```
 
-5. Запустить сервер
+6. Запустить сервер
     ```bash
     [kzhukov@fedora gophkeeper]$ ./start_server.sh
     2022/12/19 15:12:04 starting server on localhost:10443
     ```
 
-6. Запустить клиента
+7. Запустить клиента
     ```bash
     [kzhukov@fedora gophkeeper]$ ./start_client.sh
     Welcome to gophkeeper. Let`s set you up
