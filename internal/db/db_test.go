@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"os"
 	"testing"
 
 	"github.com/golang-migrate/migrate/v4"
@@ -18,12 +19,13 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/helpers"
 )
 
-const dsn = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
+
+const dsnDefault = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
 const migrationsFolder = "file://../../db/migrations"
 
 var ctx = context.Background()
 
-func runMigrations(direction string) error {
+func runMigrations(dsn string, direction string) error {
 	migrate, err := migrate.New(migrationsFolder, dsn)
 	if err != nil {
 		return fmt.Errorf("cannot init migrate object: %s", err.Error())
@@ -40,6 +42,11 @@ func runMigrations(direction string) error {
 }
 
 func setUp() Connector {
+	// added so github action vill be able to connect to test database
+	var dsn = os.Getenv("GK_DB_TEST_DSN")
+	if (dsn == "" ){
+		dsn = dsnDefault
+	}
 	c := Connector{Ctx: ctx, DSN: dsn}
 	err := c.Init()
 	if err != nil {
@@ -47,7 +54,7 @@ func setUp() Connector {
 	}
 
 	// running migrations
-	err = runMigrations("up")
+	err = runMigrations(dsn, "up")
 	if err != nil {
 		log.Fatalf("cannot run up migrations: %s", err.Error())
 	}
@@ -55,7 +62,7 @@ func setUp() Connector {
 }
 
 func tearDown(c Connector) {
-	err := runMigrations("down")
+	err := runMigrations(c.DSN, "down")
 	if err != nil {
 		log.Fatalf("cannot run down migrations: %s", err.Error())
 	}
