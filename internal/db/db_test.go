@@ -12,9 +12,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-migrate/migrate/v4"
-	_ "github.com/golang-migrate/migrate/v4/database/postgres"
-	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/enc"
 	"github.com/zklevsha/gophkeeper/internal/errs"
@@ -22,28 +19,13 @@ import (
 
 
 const dsnDefault = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
-const migrationsFolder = "file://../../db/migrations"
 
 var ctx = context.Background()
 
-func runMigrations(dsn string, direction string) error {
-	migrate, err := migrate.New(migrationsFolder, dsn)
-	if err != nil {
-		return fmt.Errorf("cannot init migrate object: %s", err.Error())
-	}
-	defer closeMigration(migrate)
-	switch direction {
-	case "up":
-		return migrate.Up()
-	case "down":
-		return migrate.Down()
-	default:
-		return fmt.Errorf("bad direction parameter: %s (only up/down are supported)", direction)
-	}
-}
+
 
 func setUp() Connector {
-	// added so github action vill be able to connect to test database
+	// added so github action will be able to connect to test database
 	var dsn = os.Getenv("GK_DB_TEST_DSN")
 	if (dsn == "" ){
 		dsn = dsnDefault
@@ -55,7 +37,7 @@ func setUp() Connector {
 	}
 
 	// running migrations
-	err = runMigrations(dsn, "up")
+	err = RunMigrations(dsn, "up")
 	if err != nil {
 		log.Fatalf("cannot run up migrations: %s", err.Error())
 	}
@@ -63,10 +45,11 @@ func setUp() Connector {
 }
 
 func tearDown(c Connector) {
-	err := runMigrations(c.DSN, "down")
+	err := RunMigrations(c.DSN, "down")
 	if err != nil {
 		log.Fatalf("cannot run down migrations: %s", err.Error())
 	}
+	c.Close()
 }
 
 func pdataConvert(ptype string, pname string, input interface{}) (Pdata, error) {
@@ -446,15 +429,6 @@ func TestPdataDelete(t *testing.T) {
 	if !errors.Is(err, errs.ErrPdataNotFound) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
-}
-
-
-func closeMigration(m *migrate.Migrate) {
-	sourceErr, dbErr := m.Close()
-	if sourceErr != nil || dbErr != nil {
-		log.Fatalf("Cant close migration: sourceErr: %v, dbErr: %v", sourceErr, dbErr)
-	}
-
 }
 
 
