@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
@@ -35,7 +34,7 @@ func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 	passwordOne := getInput("password (set empty for automatic generation):",
 		any, false)
 	if passwordOne == "" {
-		password = helpers.GetRandomSrt(32)
+		password = getRandomSrt(32)
 	} else {
 		passwordTwo := getInput("confirm password:", notEmpty, false)
 		if passwordOne != passwordTwo {

@@ -6,14 +6,12 @@ import (
 	"os"
 	"path"
 	"time"
-
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 )
 
 const keyLength = 32
 
 func kgenerate(kdir string) (string, error) {
-	randomStr := helpers.GetRandomSrt(keyLength)
+	randomStr := getRandomSrt(keyLength)
 	kname := fmt.Sprintf("gkeeper-%d", time.Now().UnixNano())
 	kpath := path.Join(kdir, kname)
 	err := os.WriteFile(kpath, []byte(randomStr), 0600)

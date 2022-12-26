@@ -7,8 +7,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"math/rand"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
@@ -16,7 +18,6 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/enc"
 	"github.com/zklevsha/gophkeeper/internal/errs"
-	"github.com/zklevsha/gophkeeper/internal/helpers"
 )
 
 
@@ -69,7 +70,7 @@ func tearDown(c Connector) {
 }
 
 func pdataConvert(ptype string, pname string, input interface{}) (Pdata, error) {
-	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey := client.MasterKey{Key: getRandomSrt(32)}
 	masterKey.SetHash()
 
 	pdataBytes, err := json.Marshal(input)
@@ -159,7 +160,7 @@ func TestAddPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
-	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey := client.MasterKey{Key: getRandomSrt(32)}
 	masterKey.SetHash()
 
 	// setup for Upass
@@ -200,7 +201,7 @@ func TestGetPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
-	masterKey := client.MasterKey{Key: helpers.GetRandomSrt(32)}
+	masterKey := client.MasterKey{Key: getRandomSrt(32)}
 	masterKey.SetHash()
 
 	// setup for Upass
@@ -454,4 +455,18 @@ func closeMigration(m *migrate.Migrate) {
 		log.Fatalf("Cant close migration: sourceErr: %v, dbErr: %v", sourceErr, dbErr)
 	}
 
+}
+
+
+func getRandomSrt(strLen int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	var seededRand *rand.Rand = rand.New(
+		rand.NewSource(time.Now().UnixNano()))
+	b := make([]byte, strLen)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
 }

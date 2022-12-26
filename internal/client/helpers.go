@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/enc"
 	"github.com/zklevsha/gophkeeper/internal/pb"
@@ -162,3 +164,18 @@ func listDir(dirPath string) ([]string, error) {
 	}
 	return files, nil
 }
+
+
+func getRandomSrt(strLen int) string {
+	const charset = "abcdefghijklmnopqrstuvwxyz" +
+	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
+
+	var seededRand *rand.Rand = rand.New(
+		rand.NewSource(time.Now().UnixNano()))
+	b := make([]byte, strLen)
+	for i := range b {
+		b[i] = charset[seededRand.Intn(len(charset))]
+	}
+	return string(b)
+}
+
