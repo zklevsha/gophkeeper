@@ -1,4 +1,4 @@
-// errs contains all custo, errors used in this project
+// Package errs contains all custo, errors used in this project
 package errs
 
 import "errors"
@@ -28,7 +28,7 @@ var ErrInvalidCardExpire = errors.New("expected format: MM/YY")
 // ErrInvalidCardCVV return when we failed to parse input card CVV/CVC
 var ErrInvalidCardCVV = errors.New("expected format: XXX")
 
-// KeyValueError returns when we cant parse key-value pairs
+// ErrKeyValue returns when we cant parse key-value pairs
 var ErrKeyValue = errors.New("failed to parse input as json")
 
 // ErrPdataNotFound returns when we cant find Pdata for user

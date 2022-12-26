@@ -30,7 +30,7 @@ func runMigrations(dsn string, direction string) error {
 	if err != nil {
 		return fmt.Errorf("cannot init migrate object: %s", err.Error())
 	}
-	defer migrate.Close()
+	defer closeMigration(migrate)
 	switch direction {
 	case "up":
 		return migrate.Up()
@@ -445,4 +445,13 @@ func TestPdataDelete(t *testing.T) {
 	if !errors.Is(err, errs.ErrPdataNotFound) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
+}
+
+
+func closeMigration(m *migrate.Migrate) {
+	sourceErr, dbErr := m.Close()
+	if sourceErr != nil || dbErr != nil {
+		log.Fatalf("Cant close migration: sourceErr: %v, dbErr: %v", sourceErr, dbErr)
+	}
+
 }

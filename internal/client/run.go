@@ -12,7 +12,7 @@ func Run(gclient *Gclient, mstorage *MemStorage) {
 
 	// setting up gk for user
 	ctx := context.Background()
-	setup(mstorage, ctx, gclient)
+	setup(ctx, mstorage, gclient)
 
 	// infinite loop for interactive cli
 	for {
@@ -54,43 +54,43 @@ func Run(gclient *Gclient, mstorage *MemStorage) {
 
 			// Upass
 		case "upass-add":
-			upassCreate(mstorage, ctx, gclient)
+			upassCreate(ctx, mstorage, gclient)
 		case "upass-get":
-			upassGet(mstorage, ctx, gclient)
+			upassGet(ctx, mstorage, gclient)
 		case "upass-update":
-			upassUpdate(mstorage, ctx, gclient)
+			upassUpdate(ctx, mstorage, gclient)
 		case "upass-delete":
-			upassDelete(mstorage, ctx, gclient)
+			upassDelete(ctx, mstorage, gclient)
 
 		// Credit card
 		case "card-add":
-			cardCreate(mstorage, ctx, gclient)
+			cardCreate(ctx, mstorage, gclient)
 		case "card-get":
-			cardGet(mstorage, ctx, gclient)
+			cardGet(ctx, mstorage, gclient)
 		case "card-update":
-			cardUpdate(mstorage, ctx, gclient)
+			cardUpdate(ctx, mstorage, gclient)
 		case "card-delete":
-			cardDelete(mstorage, ctx, gclient)
+			cardDelete(ctx, mstorage,  gclient)
 
 		// Private string
 		case "pstring-add":
-			pstringCreate(mstorage, ctx, gclient)
+			pstringCreate(ctx, mstorage, gclient)
 		case "pstring-get":
-			pstringGet(mstorage, ctx, gclient)
+			pstringGet(ctx, mstorage, gclient)
 		case "pstring-update":
-			pstringUpdate(mstorage, ctx, gclient)
+			pstringUpdate(ctx, mstorage, gclient)
 		case "pstring-delete":
-			pstringDelete(mstorage, ctx, gclient)
+			pstringDelete(ctx, mstorage, gclient)
 
 		// Private file
 		case "pfile-add":
-			pfileAdd(mstorage, ctx, gclient)
+			pfileAdd(ctx, mstorage, gclient)
 		case "pfile-get":
-			pfileGet(mstorage, ctx, gclient)
+			pfileGet( ctx, mstorage, gclient)
 		case "pfile-update":
-			pfileUpdate(mstorage, ctx, gclient)
+			pfileUpdate(ctx, mstorage, gclient)
 		case "pfile-delete":
-			pfileDelete(mstorage, ctx, gclient)
+			pfileDelete(ctx, mstorage, gclient)
 
 		// Other
 		case "help":
@@ -107,7 +107,7 @@ func Run(gclient *Gclient, mstorage *MemStorage) {
 }
 
 // setup setups gk for user: login/register and loading/generating master key
-func setup(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func setup(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	log.Printf("Welcome to gophkeeper. Let`s set you up")
 
 	// Register/Login

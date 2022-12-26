@@ -55,11 +55,11 @@ func main() {
 
 // createKeyDir creates MasterKeys directory (in needed) and returns its path
 func createKeyDir() string {
-	user_home, err := os.UserHomeDir()
+	userHome, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("cant get user home directory: %s", err.Error())
 	}
-	kpath := path.Join(user_home, ".gk-keychain")
+	kpath := path.Join(userHome, ".gk-keychain")
 	err = os.MkdirAll(kpath, 0700)
 	if err != nil {
 		log.Fatalf("cant create keychain directory(%s): %s", kpath, err.Error())
@@ -69,11 +69,11 @@ func createKeyDir() string {
 
 // createKeyDir creates private file directory (in needed) and returns its path
 func createPfileDir() string {
-	user_home, err := os.UserHomeDir()
+	userHome, err := os.UserHomeDir()
 	if err != nil {
 		log.Fatalf("cant get user home directory: %s", err.Error())
 	}
-	kpath := path.Join(user_home, ".gk-pfiles")
+	kpath := path.Join(userHome, ".gk-pfiles")
 	err = os.MkdirAll(kpath, 0700)
 	if err != nil {
 		log.Fatalf("cant create pfile directory(%s): %s", kpath, err.Error())

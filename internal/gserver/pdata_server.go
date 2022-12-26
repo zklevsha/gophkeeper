@@ -22,21 +22,21 @@ type pdataServer struct {
 
 // getUserId retrives userid from context
 // (userid is set by server interceptor)
-func (s *pdataServer) getUserId(ctx context.Context) (int64, error) {
+func (s *pdataServer) getUserID(ctx context.Context) (int64, error) {
 	md, ok := metadata.FromIncomingContext(ctx)
 	if !ok {
 		return 0, status.Errorf(codes.Internal, "failed to retrive metadata from ctx")
 	}
-	token_raw, ok := md["authorization"]
+	tokenRaw, ok := md["authorization"]
 	if !ok {
 		return 0, errs.ErrNoToken
 	}
-	token_parsed, err := jmanager.Validate(token_raw[0], s.key)
+	tokenParsed, err := jmanager.Validate(tokenRaw[0], s.key)
 	if err != nil {
 		return 0, errs.ErrInvalidToken
 	}
 
-	return token_parsed.Claims.UserID, nil
+	return tokenParsed.Claims.UserID, nil
 
 }
 
@@ -52,7 +52,7 @@ func (s *pdataServer) AddPdata(ctx context.Context, in *pb.AddPdataRequest) (*pb
 		KeyHash:     base64.StdEncoding.EncodeToString(in.Pdata.KeyHash),
 		PrivateData: base64.StdEncoding.EncodeToString(in.Pdata.Pdata)}
 
-	userID, err := s.getUserId(ctx)
+	userID, err := s.getUserID(ctx)
 	if err != nil {
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -71,7 +71,7 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 	if in.PdataID == 0 {
 		return nil, status.Errorf(codes.InvalidArgument, "pname is not set")
 	}
-	userID, err := s.getUserId(ctx)
+	userID, err := s.getUserID(ctx)
 	if err != nil {
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -107,7 +107,7 @@ func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest
 	if in.Pdata == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "pname is not set")
 	}
-	userID, err := s.getUserId(ctx)
+	userID, err := s.getUserID(ctx)
 	if err != nil {
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -129,7 +129,7 @@ func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest
 }
 
 func (s *pdataServer) ListPdata(ctx context.Context, in *pb.ListPdataRequest) (*pb.ListPdataResponse, error) {
-	userID, err := s.getUserId(ctx)
+	userID, err := s.getUserID(ctx)
 	if err != nil {
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -152,7 +152,7 @@ func (s *pdataServer) ListPdata(ctx context.Context, in *pb.ListPdataRequest) (*
 }
 
 func (s *pdataServer) DeletePdata(ctx context.Context, in *pb.DeletePdataRequest) (*pb.DeletePdataResponse, error) {
-	userID, err := s.getUserId(ctx)
+	userID, err := s.getUserID(ctx)
 	if err != nil {
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)

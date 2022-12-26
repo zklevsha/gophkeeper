@@ -10,6 +10,7 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
+// UPass represents user`s Username/Password pair
 type UPass struct {
 	Name     string            `json:"name"`
 	Username string            `json:"username"`
@@ -19,7 +20,7 @@ type UPass struct {
 
 
 // upassCreate  creates UserPassword entry and sends it to server via gRPC
-func upassCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -71,7 +72,7 @@ func upassCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 }
 
 // upassGet retrives Upass from gRPC server
-func upassGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -107,16 +108,16 @@ func upassGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	}
 	up := cleaned.(UPass)
 
-	upass_pretty, err := json.MarshalIndent(up, "", " ")
+	upassPretty, err := json.MarshalIndent(up, "", " ")
 	if err != nil {
 		log.Printf("ERROR cant encode upass JSON: %s\n", err.Error())
 	} else {
-		log.Println(string(upass_pretty))
+		log.Println(string(upassPretty))
 	}
 
 }
 
-func upassUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -170,12 +171,12 @@ func upassUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 			return
 		}
 	}
-	tagsJson, err := json.Marshal(up.Tags)
+	tagsJSON, err := json.Marshal(up.Tags)
 	if err != nil {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -213,7 +214,7 @@ func upassUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	log.Println(updateResp.Response)
 }
 
-func upassDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func upassDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

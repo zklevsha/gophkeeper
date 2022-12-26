@@ -9,7 +9,7 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
-// PricateString represents user`s private string
+// Pstring represents user`s private string
 type Pstring struct {
 	Name   string            `json:"name"`
 	String string            `json:"string"`
@@ -17,7 +17,7 @@ type Pstring struct {
 }
 
 // pstringCreate creates private string and sends it to server
-func pstringCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pstringCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -51,7 +51,7 @@ func pstringCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) 
 }
 
 // pstringGet retrives private string and sends it to server
-func pstringGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pstringGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -88,17 +88,17 @@ func pstringGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	}
 	pstring := cleaned.(Pstring)
 
-	pstring_pretty, err := json.MarshalIndent(pstring, "", " ")
+	pstringPretty, err := json.MarshalIndent(pstring, "", " ")
 	if err != nil {
 		log.Printf("ERROR cant encode pstring JSON : %s\n", err.Error())
 	} else {
-		log.Println(string(pstring_pretty))
+		log.Println(string(pstringPretty))
 	}
 
 }
 
 // pstringUpdate updates pstring entry
-func pstringUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -143,12 +143,12 @@ func pstringUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) 
 		stringNew = pstring.String
 	}
 
-	tagsJson, err := json.Marshal(pstring.Tags)
+	tagsJSON, err := json.Marshal(pstring.Tags)
 	if err != nil {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -187,7 +187,7 @@ func pstringUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) 
 }
 
 // pstringDelete deletes pstring entry
-func pstringDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pstringDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

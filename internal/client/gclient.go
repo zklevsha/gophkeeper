@@ -15,6 +15,7 @@ type Gclient struct {
 	Pdata pb.PrivateDataClient
 }
 
+// NewGclient initializes new Gclient
 func NewGclient(conn *grpc.ClientConn) Gclient {
 	return Gclient{
 		Auth:  pb.NewAuthClient(conn),

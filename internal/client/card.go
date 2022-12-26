@@ -22,7 +22,7 @@ type Card struct {
 
 
 // cardCreate creates Credit card entry and sends it to server via gRPC
-func cardCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func cardCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -62,7 +62,7 @@ func cardCreate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 }
 
 // cardGet retreives Credit card entry from the server
-func cardGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -102,16 +102,16 @@ func cardGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	card := cleaned.(Card)
 
 	// print data
-	upass_pretty, err := json.MarshalIndent(card, "", " ")
+	upassPretty, err := json.MarshalIndent(card, "", " ")
 	if err != nil {
 		log.Printf("ERROR cant encode upass JSON : %s\n", err.Error())
 	} else {
-		log.Println(string(upass_pretty))
+		log.Println(string(upassPretty))
 	}
 }
 
 // cardUpdate Credit card entry from the server
-func cardUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -186,12 +186,12 @@ func cardUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 		newCard.CVC = cvc
 	}
 	// tags
-	tagsJson, err := json.Marshal(oldCard.Tags)
+	tagsJSON, err := json.Marshal(oldCard.Tags)
 	if err != nil {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr == "" {
 		tagsNew = oldCard.Tags
@@ -221,7 +221,7 @@ func cardUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 
 }
 
-func cardDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func cardDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

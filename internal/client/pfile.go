@@ -13,7 +13,7 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
-const PFILE_MAX_SIZE = 1000000
+const pfileMaxSize = 1000000
 
 // Pfile represents user`s private file
 type Pfile struct {
@@ -23,7 +23,7 @@ type Pfile struct {
 }
 
 // pfileAdd sends pfile to server
-func pfileAdd(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pfileAdd(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -73,7 +73,7 @@ func pfileAdd(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 }
 
 // pfile retrrives user`s private file from server
-func pfileGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pfileGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -128,17 +128,17 @@ func pfileGet(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 		return
 	}
 	log.Println("pfile tags:")
-	tags_pretty, err := json.MarshalIndent(pfile.Tags, "", " ")
+	tagsPretty, err := json.MarshalIndent(pfile.Tags, "", " ")
 	if err != nil {
 		log.Printf("ERROR cant encode tags to JSON : %s\n", err.Error())
 	} else {
-		log.Println(string(tags_pretty))
+		log.Println(string(tagsPretty))
 	}
 
 }
 
 // pfileUpdate update pfile entry
-func pfileUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())
@@ -185,12 +185,12 @@ func pfileUpdate(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
 	}
 
 	//getting new tags from user
-	tagsJson, err := json.Marshal(pfileOld.Tags)
+	tagsJSON, err := json.Marshal(pfileOld.Tags)
 	if err != nil {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJson), isTags, false)
+	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -244,8 +244,8 @@ func loadFile(fpath string) ([]byte, error) {
 	if err != nil {
 		return []byte{}, fmt.Errorf("cannot get file info: %s", err.Error())
 	}
-	if fStat.Size() > PFILE_MAX_SIZE {
-		return []byte{}, fmt.Errorf("file size cannot be larger than %d bytes", PFILE_MAX_SIZE)
+	if fStat.Size() > pfileMaxSize {
+		return []byte{}, fmt.Errorf("file size cannot be larger than %d bytes", pfileMaxSize)
 	}
 
 	// loading file
@@ -257,7 +257,7 @@ func loadFile(fpath string) ([]byte, error) {
 }
 
 // pfileDetele deletes pstring entry
-func pfileDelete(mstorage *MemStorage, ctx context.Context, gclient *Gclient) {
+func pfileDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
 		log.Println(err.Error())

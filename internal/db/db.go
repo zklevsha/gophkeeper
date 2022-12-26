@@ -28,13 +28,13 @@ func (c *Connector) checkInit() error {
 }
 
 // Init connects to DB and initilizes connection pool
-func (d *Connector) Init() error {
-	p, err := pgxpool.Connect(d.Ctx, d.DSN)
+func (c *Connector) Init() error {
+	p, err := pgxpool.Connect(c.Ctx, c.DSN)
 	if err != nil {
 		return fmt.Errorf("unable to connect to database: %v", err)
 	}
-	d.Pool = p
-	d.initialized = true
+	c.Pool = p
+	c.initialized = true
 	return nil
 }
 
@@ -216,7 +216,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 	return id, nil
 }
 
-// PrivateGet retrive private data from database
+// PrivateGet retrives private data from database
 func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
 
 	err := c.checkInit()
@@ -250,6 +250,7 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
 	}
 }
 
+// PrivateUpdate updates private data in database
 func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
 	err := c.checkInit()
 	if err != nil {
@@ -281,6 +282,7 @@ func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
 	return nil
 }
 
+// PrivateList returns list of user`s private entries
 func (c *Connector) PrivateList(userID int64, ptype string) ([]PdataEntry, error) {
 	err := c.checkInit()
 	if err != nil {

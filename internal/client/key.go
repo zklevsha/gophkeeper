@@ -1,5 +1,3 @@
-// key.go contains funtrions for generating and loading master key
-// those functions are used in interactive cli
 package client
 
 import (
@@ -58,9 +56,8 @@ func keyLoad(kpath string, mstorage *MemStorage) error {
 			log.Printf("you dont have any keychain directory(%s)", mstorage.MasterKeyDir)
 			if getYN("Do you want to generate one?") {
 				return keyGenerate(mstorage)
-			} else {
-				return nil
 			}
+			return nil
 		}
 		kpath = inputSelect("Select key to load", keys)
 	}
