@@ -7,8 +7,7 @@ on:
       - main
 
 jobs:
-
-  devopstest:
+  autotests:
     runs-on: ubuntu-latest
     container: golang:1.19
 
