@@ -14,8 +14,16 @@ import (
 	"github.com/zklevsha/gophkeeper/internal/gserver"
 )
 
-func main() {
+var buildVersion string = "N/A"
+var buildDate string = "N/A"
+var buildCommit string = "N/A"
 
+func printStartupInfo() {
+	log.Printf("build version: %s, build date: %s, build commit: %s",
+		buildVersion, buildDate, buildCommit)
+}
+
+func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
@@ -46,6 +54,7 @@ func main() {
 
 	// stating gRPC server
 	log.Printf("starting server on %s", config.ServerAddress)
+	printStartupInfo()
 	listener, err := net.Listen("tcp", config.ServerAddress)
 	if err != nil {
 		panic(err)
