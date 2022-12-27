@@ -82,6 +82,7 @@ func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	entries, err := listPnames(ctx, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Println("You dont have any upass entries")
@@ -104,6 +105,7 @@ func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
+		return
 	}
 	up := cleaned.(UPass)
 
@@ -224,6 +226,7 @@ func upassDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	entries, err := listPnames(ctx, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Printf("You dont have any upass entries")

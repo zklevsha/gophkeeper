@@ -62,6 +62,7 @@ func pstringGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	entries, err := listPnames(ctx, gclient, "pstring")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pstring entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Println("You dont have any pstring entries")
@@ -198,6 +199,7 @@ func pstringDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	entries, err := listPnames(ctx, gclient, "pstring")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pstring entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Printf("You dont have any pstring entries")

@@ -74,6 +74,7 @@ func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	entries, err := listPnames(ctx, gclient, "card")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Printf("You dont have any card entries")
@@ -232,6 +233,7 @@ func cardDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	entries, err := listPnames(ctx, gclient, "card")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
+		return
 	}
 	if len(entries) == 0 {
 		log.Printf("You dont have any card entries")

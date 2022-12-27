@@ -28,7 +28,7 @@ func (s *pdataServer) getUserID(ctx context.Context) (int64, error) {
 		return 0, status.Errorf(codes.Internal, "failed to retrive metadata from ctx")
 	}
 	tokenRaw, ok := md["authorization"]
-	if !ok {
+	if !ok || len(tokenRaw[0]) == 0 {
 		return 0, errs.ErrNoToken
 	}
 	tokenParsed, err := jmanager.Validate(tokenRaw[0], s.key)

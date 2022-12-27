@@ -14,7 +14,14 @@ func main() {
 
 	clientConfig := config.GetClientConfig(os.Args[1:])
 	mstorage := client.NewMemStorage()
-	gclient := client.NewGclient(clientConfig, mstorage)
+	gclient, conn := client.NewGclient(clientConfig, &mstorage)
+
+	defer func() {
+		err := conn.Close()
+		if err != nil {
+			log.Fatal(err)
+		}
+	}()
 
 	// starting interactive loop
 	client.Run(&gclient, &mstorage)

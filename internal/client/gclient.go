@@ -21,7 +21,7 @@ type Gclient struct {
 }
 
 // NewGclient initializes new Gclient
-func NewGclient(clientConfig config.ClientConfig, mstorage MemStorage) Gclient {
+func NewGclient(clientConfig config.ClientConfig, mstorage *MemStorage) (Gclient, *grpc.ClientConn)  {
 	var conn *grpc.ClientConn
 	var err error
 	if clientConfig.UseTLS {
@@ -30,27 +30,20 @@ func NewGclient(clientConfig config.ClientConfig, mstorage MemStorage) Gclient {
 		}
 		conn, err = grpc.Dial(clientConfig.ServerAddress,
 			grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)),
-			grpc.WithUnaryInterceptor(getUnaryClientInterceptor(&mstorage)))
+			grpc.WithUnaryInterceptor(getUnaryClientInterceptor(mstorage)))
 	} else {
 		conn, err = grpc.Dial(clientConfig.ServerAddress,
 			grpc.WithTransportCredentials(insecure.NewCredentials()),
-			grpc.WithUnaryInterceptor(getUnaryClientInterceptor(&mstorage)))
+			grpc.WithUnaryInterceptor(getUnaryClientInterceptor(mstorage)))
 
 	}
 	if err != nil {
 		log.Fatalf("did not connect: %v", err)
 	}
 
-	defer func() {
-		err := conn.Close()
-		if err != nil {
-			log.Fatal(err)
-		}
-	}()
-
 	return Gclient{
 		Auth:  pb.NewAuthClient(conn),
-		Pdata: pb.NewPrivateDataClient(conn)}
+		Pdata: pb.NewPrivateDataClient(conn)}, conn
 }
 
 
@@ -71,6 +64,7 @@ func getUnaryClientInterceptor(mstorage *MemStorage) grpc.UnaryClientInterceptor
 	) error {
 		if !noAuth[method] {
 			ctx = metadata.AppendToOutgoingContext(ctx, "authorization", mstorage.Token)
+
 		}
 
 		return invoker(ctx, method, req, reply, cc, opts...)
