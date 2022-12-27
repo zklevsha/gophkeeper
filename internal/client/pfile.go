@@ -58,7 +58,7 @@ func pfileAdd(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	pfile := Pfile{Name: pfileName, Data: data, Tags: tags}
 
 	// sending data to server
-	pdata, err := toPdata("pfile", pfile, mstorage.MasterKey)
+	pdata, err := ToPdata("pfile", pfile, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("cant convert pfile to pdata: %s", err.Error())
 		return
@@ -107,7 +107,7 @@ func pfileGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// decoding to pfile
-	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pdata: %s\n", err.Error())
 		return
@@ -166,7 +166,7 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert pdata to pfile: %s", err.Error())
 		return
@@ -222,7 +222,7 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 
 	// Sending new pfile to server
 	pfile := Pfile{Name: pfileName, Data: data, Tags: tagsNew}
-	pdata, err := toPdata("pfile", pfile, mstorage.MasterKey)
+	pdata, err := ToPdata("pfile", pfile, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("cant convert pfile to pdata: %s", err.Error())
 		return

@@ -35,7 +35,7 @@ func pstringCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 
 	// converting to Pdata
 	pstring := Pstring{Name: name, String: string, Tags: tags}
-	pdata, err := toPdata("pstring", pstring, mstorage.MasterKey)
+	pdata, err := ToPdata("pstring", pstring, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert pstring to pdata: %s\n", err.Error())
 		return
@@ -82,7 +82,7 @@ func pstringGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		return
 	}
 
-	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pstring: %s\n", err.Error())
 		return
@@ -127,7 +127,7 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode pstring: %s\n", err.Error())
 		return
@@ -166,7 +166,7 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 		Name:   nameNew,
 		String: stringNew,
 		Tags:   tagsNew}
-	pdataNew, err := toPdata("pstring", pstringNew, mstorage.MasterKey)
+	pdataNew, err := ToPdata("pstring", pstringNew, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert new pstring to pdata: %s\n", err.Error())
 		return

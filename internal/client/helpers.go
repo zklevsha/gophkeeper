@@ -44,8 +44,8 @@ func listPnames(ctx context.Context, gclient *Gclient, ptype string) (map[string
 	return entries, nil
 }
 
-// toPdata converts Upass/Card/Pfile/Pstring to Pdata
-func toPdata(ptype string, input interface{}, key MasterKey) (*pb.Pdata, error) {
+// ToPdata converts Upass/Card/Pfile/Pstring to Pdata
+func ToPdata(ptype string, input interface{}, key MasterKey) (*pb.Pdata, error) {
 	var name string
 	var encoded []byte
 	var err error
@@ -92,8 +92,8 @@ func toPdata(ptype string, input interface{}, key MasterKey) (*pb.Pdata, error) 
 	return &pdata, nil
 }
 
-// fromPdata converts Pdata to Upass/Card/Pfile/Pstring
-func fromPdata(pdata *pb.Pdata, key MasterKey) (interface{}, error) {
+// FromPdata converts Pdata to Upass/Card/Pfile/Pstring
+func FromPdata(pdata *pb.Pdata, key MasterKey) (interface{}, error) {
 	// check if we using correct master key
 	if string(pdata.KeyHash) != string(key.KeyHash) {
 		e := fmt.Errorf(`key hash mismatch
@@ -164,8 +164,8 @@ func listDir(dirPath string) ([]string, error) {
 	return files, nil
 }
 
-
-func getRandomSrt(strLen int) string {
+// GetRandomSrt generates random string of specified length
+func GetRandomSrt(strLen int) string {
 	const charset = "abcdefghijklmnopqrstuvwxyz" +
 	"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 

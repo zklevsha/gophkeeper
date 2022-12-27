@@ -34,7 +34,7 @@ func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 	passwordOne := getInput("password (set empty for automatic generation):",
 		any, false)
 	if passwordOne == "" {
-		password = getRandomSrt(32)
+		password = GetRandomSrt(32)
 	} else {
 		passwordTwo := getInput("confirm password:", notEmpty, false)
 		if passwordOne != passwordTwo {
@@ -55,7 +55,7 @@ func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 		Username: username,
 		Password: password,
 		Tags:     tags}
-	pdata, err := toPdata("upass", upass, mstorage.MasterKey)
+	pdata, err := ToPdata("upass", upass, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("canntot convert to Pdata: %s", err.Error())
 	}
@@ -102,7 +102,7 @@ func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		return
 	}
 
-	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
 		return
@@ -146,7 +146,7 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
 	}
-	cleaned, err := fromPdata(getResp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(getResp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode upass: %s\n", err.Error())
 		return
@@ -194,7 +194,7 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		Username: usernameNew,
 		Password: passwordNew,
 		Tags:     tagsNew}
-	pdataNew, err := toPdata("upass", upNew, mstorage.MasterKey)
+	pdataNew, err := ToPdata("upass", upNew, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cannot convert new upass to pdata: %s\n", err.Error())
 		return

@@ -45,7 +45,7 @@ func TestReqCheck(t *testing.T) {
 }
 
 func TestToPdata(t *testing.T) {
-	masterKey := MasterKey{Key: getRandomSrt(32)}
+	masterKey := MasterKey{Key: GetRandomSrt(32)}
 	tt := []struct {
 		name  string
 		input interface{}
@@ -95,7 +95,7 @@ func TestToPdata(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := toPdata(tc.inputType, tc.input, masterKey)
+			_, err := ToPdata(tc.inputType, tc.input, masterKey)
 			if err != nil {
 				t.Error(err.Error())
 			}
@@ -104,7 +104,7 @@ func TestToPdata(t *testing.T) {
 }
 
 func TestFromPdata(t *testing.T) {
-	masterKey := MasterKey{Key: getRandomSrt(32)}
+	masterKey := MasterKey{Key: GetRandomSrt(32)}
 
 	// test Upass
 	upassTest  := UPass{
@@ -112,7 +112,7 @@ func TestFromPdata(t *testing.T) {
 		Username: "vasya", Password: "pupkin",
 		Tags: map[string]string{"test":"test"},
 	}
-	upassTestPdata, err := toPdata("upass", upassTest, masterKey)
+	upassTestPdata, err := ToPdata("upass", upassTest, masterKey)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -130,7 +130,7 @@ func TestFromPdata(t *testing.T) {
 		CVC: "123",
 		Tags: map[string]string{"test":"test"},
 	}
-	cardTestPdata, err := toPdata("card", cardTest, masterKey)
+	cardTestPdata, err := ToPdata("card", cardTest, masterKey)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -145,7 +145,7 @@ func TestFromPdata(t *testing.T) {
 		String: "secret string",
 		Tags: map[string]string{"test":"test"},
 	}
-	pstringTestPdata, err := toPdata("pstring", pstringTest, masterKey)
+	pstringTestPdata, err := ToPdata("pstring", pstringTest, masterKey)
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -180,7 +180,7 @@ func TestFromPdata(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			have, err := fromPdata(tc.input, masterKey)
+			have, err := FromPdata(tc.input, masterKey)
 			if err != nil {
 				t.Error(err.Error())
 			}
@@ -197,7 +197,7 @@ func TestFromPdata(t *testing.T) {
 
 func TestGetRandomStr(t *testing.T) {
 	wantSize := 32
-	testStr := getRandomSrt(wantSize)
+	testStr := GetRandomSrt(wantSize)
 	haveSize := len(testStr)
 	if wantSize != haveSize {
 		t.Errorf("string lenght mismatch: want: %d, have: %d",

@@ -47,7 +47,7 @@ func cardCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		Name: name, Number: number,
 		Holder: holder, Expire: expire,
 		CVC: cvc, Tags: tags}
-	pdata, err := toPdata("card", card, mstorage.MasterKey)
+	pdata, err := ToPdata("card", card, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert to pdata %s", err.Error())
 	}
@@ -95,7 +95,7 @@ func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// decrypting and converting to Card struct
-	cleaned, err := fromPdata(resp.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(resp.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode card: %s\n", err.Error())
 		return
@@ -142,7 +142,7 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant get card entry: %s\n", err.Error())
 		return
 	}
-	cleaned, err := fromPdata(getPdataResponse.Pdata, mstorage.MasterKey)
+	cleaned, err := FromPdata(getPdataResponse.Pdata, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant decode card: %s\n", err.Error())
 		return
@@ -206,7 +206,7 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	newCard.Tags = tagsNew
 
 	// converting new card to pdata
-	pdata, err := toPdata("card", newCard, mstorage.MasterKey)
+	pdata, err := ToPdata("card", newCard, mstorage.MasterKey)
 	if err != nil {
 		log.Printf("ERROR: cant convert to pdata %s", err.Error())
 	}
