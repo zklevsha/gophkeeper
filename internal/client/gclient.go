@@ -22,8 +22,6 @@ type Gclient struct {
 
 // NewGclient initializes new Gclient
 func NewGclient(clientConfig config.ClientConfig, mstorage MemStorage) Gclient {
-
-
 	var conn *grpc.ClientConn
 	var err error
 	if clientConfig.UseTLS {
@@ -49,7 +47,6 @@ func NewGclient(clientConfig config.ClientConfig, mstorage MemStorage) Gclient {
 			log.Fatal(err)
 		}
 	}()
-
 
 	return Gclient{
 		Auth:  pb.NewAuthClient(conn),

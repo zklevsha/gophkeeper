@@ -1,7 +1,10 @@
-// Package errs contains all custo, errors used in this project
+// Package errs contains all custom errors used in this project
 package errs
 
-import "errors"
+import (
+	"errors"
+	"fmt"
+)
 
 // ErrUserAlreadyExists returns when
 // a user with the same name already exists
@@ -42,3 +45,11 @@ var ErrNoToken = errors.New("no JWT")
 
 // ErrInvalidToken returns when JWT token is invalid
 var ErrInvalidToken = errors.New("JWT is invalid")
+
+
+// ErrMasterKeyIsMissing returns when client did not loaded his master key
+var ErrMasterKeyIsMissing = fmt.Errorf("master-key does not exists\n" +
+			"add it via key-generate/key-load commands")
+
+// ErrLoginRequired returns when client was not authenticated
+var ErrLoginRequired = errors.New("login required (login)")

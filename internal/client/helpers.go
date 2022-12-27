@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/gob"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"math/rand"
 	"os"
@@ -13,18 +12,18 @@ import (
 	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/enc"
+	"github.com/zklevsha/gophkeeper/internal/errs"
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
 // reqCheck checks that user is logged in and has master key loaded
 func reqCheck(mstorage *MemStorage) error {
 	if mstorage.MasterKey.Key == "" {
-		return fmt.Errorf("master-key does not exists\n" +
-			"add it via key-generate/key-load commands")
+		return errs.ErrMasterKeyIsMissing
 
 	}
 	if mstorage.Token == "" {
-		return errors.New("login required (login)")
+		return errs.ErrLoginRequired
 	}
 	return nil
 }
@@ -147,7 +146,7 @@ func fromPdata(pdata *pb.Pdata, key MasterKey) (interface{}, error) {
 
 
 
-// listDir reads directory (non recurcevl) and returns full paths of files
+// listDir reads directory (non recurcevly) and returns full paths of files
 func listDir(dirPath string) ([]string, error) {
 	var files []string
 	fileInfo, err := os.ReadDir(dirPath)

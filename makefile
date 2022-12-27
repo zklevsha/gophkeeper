@@ -21,12 +21,11 @@ lint:
 	errcheck ./...
 	golint ./...
 
-
+test:
+	go test ./... -p 1
 
 make migrate_install:
 	curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz -C  ${GOPATH}/bin
-
-
 
 
 # dont forget to install migrate binary (make migrate_install)
