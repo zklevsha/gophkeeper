@@ -36,7 +36,7 @@ func (s *authServer) Register(ctx context.Context, in *pb.RegisterRequest) (*pb.
 
 	user := client.User{Email: in.User.Email, Password: string(encPass)}
 
-	id, err := s.db.Register(user)
+	id, err := s.db.Register(ctx, user)
 	if err != nil {
 		e := fmt.Sprintf("failed to register user: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -53,7 +53,7 @@ func (s *authServer) GetToken(ctx context.Context, in *pb.GetTokenRequest) (*pb.
 	}
 
 	// authenticate
-	user, err := s.db.GetUser(in.User.Email)
+	user, err := s.db.GetUser(ctx, in.User.Email)
 	if err != nil {
 		return nil, status.Errorf(getCode(err), err.Error())
 	}

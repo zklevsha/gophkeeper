@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/config"
 	"github.com/zklevsha/gophkeeper/internal/db"
@@ -24,13 +25,13 @@ func printStartupInfo() {
 }
 
 func main() {
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
 	defer cancel()
 
 	// initialize db.Connector and gRPC servser instance
 	config := config.GetServerConfig(os.Args[1:])
-	db := db.Connector{DSN: config.DSN, Ctx: ctx}
-	err := db.Init()
+	db := db.Connector{DSN: config.DSN,}
+	err := db.Init(ctx)
 	if err != nil {
 		log.Fatalf("failed to initialize db.Connector: %s", err.Error())
 	}

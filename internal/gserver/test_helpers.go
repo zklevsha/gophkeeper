@@ -16,8 +16,7 @@ type testServer struct {
 
 const dsnDefault = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
 
-func setUp() testServer {
-	ctx := context.Background()
+func setUp(ctx context.Context) testServer {
 	key := "secret"
 	// added so github action will be able to connect to test database
 	var dsn = os.Getenv("GK_DB_TEST_DSN")
@@ -25,8 +24,8 @@ func setUp() testServer {
 		dsn = dsnDefault
 	}
 	// connecting to DB
-	c := db.Connector{Ctx: ctx, DSN: dsn}
-	err := c.Init()
+	c := db.Connector{ DSN: dsn}
+	err := c.Init(ctx)
 	if err != nil {
 		log.Fatalf("Failed to init Connector: %s", err.Error())
 	}

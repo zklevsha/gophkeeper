@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log"
 	"testing"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 	"google.golang.org/grpc/codes"
@@ -16,8 +17,9 @@ import (
 
 
 func TestRegister(t *testing.T) {
-	ctx := context.Background()
-	server := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	server := setUp(ctx)
 	defer tearDown(server)
 
 	tt := []struct {
@@ -41,9 +43,10 @@ func TestRegister(t *testing.T) {
 }
 
 func TestGetToken(t *testing.T) {
-	server := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	server := setUp(ctx)
 	defer tearDown(server)
-	ctx := context.Background()
 	testUser := pb.User{Email: "vasya@test.ru", Password: "secret"}
 	// adding  test user
 	_, err := server.auth.Register(ctx, &pb.RegisterRequest{User: &testUser})

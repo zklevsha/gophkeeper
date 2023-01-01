@@ -57,7 +57,7 @@ func (s *pdataServer) AddPdata(ctx context.Context, in *pb.AddPdataRequest) (*pb
 		e := fmt.Sprintf("failed to get userid: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
 	}
-	_, err = s.db.PrivateAdd(userID, pdata)
+	_, err = s.db.PrivateAdd(ctx, userID, pdata)
 	if err != nil {
 		e := fmt.Sprintf("failed to add pdata to database: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -77,7 +77,7 @@ func (s *pdataServer) GetPdata(ctx context.Context, in *pb.GetPdataRequest) (*pb
 		return nil, status.Errorf(getCode(err), e)
 	}
 
-	pdata, err := s.db.PrivateGet(userID, in.PdataID)
+	pdata, err := s.db.PrivateGet(ctx, userID, in.PdataID)
 	if err != nil {
 		e := fmt.Sprintf("failed to get pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -119,7 +119,7 @@ func (s *pdataServer) UpdatePdata(ctx context.Context, in *pb.UpdatePdataRequest
 		KeyHash:     base64.StdEncoding.EncodeToString(in.Pdata.KeyHash),
 		PrivateData: base64.StdEncoding.EncodeToString(in.Pdata.Pdata)}
 
-	err = s.db.PrivateUpdate(userID, pdata)
+	err = s.db.PrivateUpdate(ctx,  userID, pdata)
 	if err != nil {
 		e := fmt.Sprintf("failed to update pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -135,7 +135,7 @@ func (s *pdataServer) ListPdata(ctx context.Context, in *pb.ListPdataRequest) (*
 		return nil, status.Errorf(getCode(err), e)
 	}
 
-	pdata, err := s.db.PrivateList(userID, in.Ptype)
+	pdata, err := s.db.PrivateList(ctx, userID, in.Ptype)
 	if err != nil {
 		e := fmt.Sprintf("failed to list pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)
@@ -158,7 +158,7 @@ func (s *pdataServer) DeletePdata(ctx context.Context, in *pb.DeletePdataRequest
 		return nil, status.Errorf(getCode(err), e)
 	}
 
-	err = s.db.PrivateDelete(userID, in.PdataID)
+	err = s.db.PrivateDelete(ctx, userID, in.PdataID)
 	if err != nil {
 		e := fmt.Sprintf("failed to delete pdata: %s", err.Error())
 		return nil, status.Errorf(getCode(err), e)

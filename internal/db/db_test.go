@@ -20,18 +20,16 @@ import (
 
 const dsnDefault = "postgres://gophkeeper:gophkeeper@localhost:5532/gophkeeper_test?sslmode=disable"
 
-var ctx = context.Background()
 
 
-
-func setUp() Connector {
+func setUp(ctx context.Context) Connector {
 	// added so github action will be able to connect to test database
 	var dsn = os.Getenv("GK_DB_TEST_DSN")
 	if (dsn == "" ){
 		dsn = dsnDefault
 	}
-	c := Connector{Ctx: ctx, DSN: dsn}
-	err := c.Init()
+	c := Connector{ DSN: dsn}
+	err := c.Init(ctx)
 	if err != nil {
 		log.Fatalf("Failed to init Connector: %s", err.Error())
 	}
@@ -74,19 +72,21 @@ func pdataConvert(ptype string, pname string, input interface{}) (Pdata, error) 
 
 func TestRegister(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
 
 	// run tests
 	t.Run("Register", func(t *testing.T) {
 		user := client.User{Email: "vasa@test.ru", Password: "test"}
-		id, err := c.Register(user)
+		id, err := c.Register(ctx, user)
 		if err != nil {
 			t.Fatalf("Register() have returned an error: %s", err.Error())
 		}
 
-		conn, err := c.Pool.Acquire(c.Ctx)
+		conn, err := c.Pool.Acquire(ctx)
 		if err != nil {
 			t.Fatalf("failed to acquire connection: %s", err.Error())
 		}
@@ -94,7 +94,7 @@ func TestRegister(t *testing.T) {
 
 		var email string
 		sql := `SELECT email FROM users WHERE id=$1`
-		err = conn.QueryRow(c.Ctx, sql, id).Scan(&email)
+		err = conn.QueryRow(ctx, sql, id).Scan(&email)
 		if err != nil {
 			t.Fatalf("failed to query users table: %s", err.Error())
 		}
@@ -107,18 +107,20 @@ func TestRegister(t *testing.T) {
 
 func TestGetUser(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
 
 	// Get user that exists
 	want := client.User{Email: "vasya@test.ru", Password: "secret"}
-	id, err := c.Register(want)
+	id, err := c.Register(ctx, want)
 	if err != nil {
 		t.Fatalf("cant register new user: %s", err.Error())
 	}
 	want.ID = id
-	have, err := c.GetUser(want.Email)
+	have, err := c.GetUser(ctx, want.Email)
 	if err != nil {
 		t.Fatalf("cant get user: %s", err.Error())
 	}
@@ -127,7 +129,7 @@ func TestGetUser(t *testing.T) {
 	}
 
 	// Get user that does`t exists
-	_, err = c.GetUser("john")
+	_, err = c.GetUser(ctx, "john")
 	if !errors.Is(err, errs.ErrUserAuth) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
@@ -135,10 +137,13 @@ func TestGetUser(t *testing.T) {
 
 func TestAddPrivate(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
-	userID, err := c.Register(client.User{Email: "vasya@test.ru",
+
+	userID, err := c.Register(ctx, client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -166,7 +171,7 @@ func TestAddPrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			_, err := c.PrivateAdd(userID, tc.pdata)
+			_, err := c.PrivateAdd(ctx, userID, tc.pdata)
 			if err != nil {
 				t.Errorf(err.Error())
 			}
@@ -176,10 +181,12 @@ func TestAddPrivate(t *testing.T) {
 
 func TestGetPrivate(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
-	userID, err := c.Register(client.User{Email: "vasya@test.ru",
+	userID, err := c.Register(ctx, client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -194,7 +201,7 @@ func TestGetPrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	pdataID, err := c.PrivateAdd(userID, pdata)
+	pdataID, err := c.PrivateAdd(ctx, userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
@@ -213,7 +220,7 @@ func TestGetPrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			have, err := c.PrivateGet(userID, tc.want.ID)
+			have, err := c.PrivateGet(ctx, userID, tc.want.ID)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -226,12 +233,14 @@ func TestGetPrivate(t *testing.T) {
 
 func TestUpdatePrivate(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(client.User{Email: "vasya@test.ru",
+	userID, err := c.Register(ctx, client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -245,7 +254,7 @@ func TestUpdatePrivate(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	privateID, err := c.PrivateAdd(userID, pdataBefore)
+	privateID, err := c.PrivateAdd(ctx, userID, pdataBefore)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
@@ -271,11 +280,11 @@ func TestUpdatePrivate(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			err := c.PrivateUpdate(userID, tc.want)
+			err := c.PrivateUpdate(ctx, userID, tc.want)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
-			have, err := c.PrivateGet(userID, tc.want.ID)
+			have, err := c.PrivateGet(ctx, userID, tc.want.ID)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -289,12 +298,14 @@ func TestUpdatePrivate(t *testing.T) {
 func TestPrivateList(t *testing.T) {
 
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(client.User{Email: "vasya@test.ru",
+	userID, err := c.Register(ctx, client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -308,7 +319,7 @@ func TestPrivateList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	pdataFirstID, err := c.PrivateAdd(userID, pdata)
+	pdataFirstID, err := c.PrivateAdd(ctx, userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
@@ -321,7 +332,7 @@ func TestPrivateList(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	pdataSecondID, err := c.PrivateAdd(userID, pdata)
+	pdataSecondID, err := c.PrivateAdd(ctx, userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
@@ -344,7 +355,7 @@ func TestPrivateList(t *testing.T) {
 
 	for _, tc := range tt {
 		t.Run(tc.name, func(t *testing.T) {
-			have, err := c.PrivateList(userID, tc.ptype)
+			have, err := c.PrivateList(ctx, userID, tc.ptype)
 			if err != nil {
 				t.Fatalf(err.Error())
 			}
@@ -365,19 +376,21 @@ func TestPrivateList(t *testing.T) {
 
 func TestPdataDelete(t *testing.T) {
 	// setup
-	c := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	c := setUp(ctx)
 	defer c.Close()
 	defer tearDown(c)
 
 	// adding test user
-	userID, err := c.Register(client.User{Email: "vasya@test.ru",
+	userID, err := c.Register(ctx, client.User{Email: "vasya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
 	}
 
 	// adding another user
-	userIDSecond, err := c.Register(client.User{Email: "petya@test.ru",
+	userIDSecond, err := c.Register(ctx, client.User{Email: "petya@test.ru",
 		Password: "password"})
 	if err != nil {
 		t.Fatalf("cant register a test user: %s", err.Error())
@@ -391,7 +404,7 @@ func TestPdataDelete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	firstID, err := c.PrivateAdd(userID, pdata)
+	firstID, err := c.PrivateAdd(ctx, userID, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
@@ -404,25 +417,25 @@ func TestPdataDelete(t *testing.T) {
 	if err != nil {
 		t.Fatalf("cant convert upass to pdata: %s", err.Error())
 	}
-	secondID, err := c.PrivateAdd(userIDSecond, pdata)
+	secondID, err := c.PrivateAdd(ctx, userIDSecond, pdata)
 	if err != nil {
 		t.Fatalf("cant add pdata to database: %s", err.Error())
 	}
 
 	// Case1: deleting pdata
-	err = c.PrivateDelete(userID, firstID)
+	err = c.PrivateDelete(ctx, userID, firstID)
 	if err != nil {
 		t.Errorf("PrivateDelete returned an error: %s", err.Error())
 	}
 
 	// Case2 : getting notexistent pdata
-	err = c.PrivateDelete(userID, 99)
+	err = c.PrivateDelete(ctx, userID, 99)
 	if !errors.Is(err, errs.ErrPdataNotFound) {
 		t.Errorf("err != structs.ErrUserAuth: %v", err)
 	}
 
 	// Case3: make sure that user one not see user two Private data
-	err = c.PrivateDelete(userID, secondID)
+	err = c.PrivateDelete(ctx, userID, secondID)
 	if err == nil {
 		t.Error("User one can delete pdata of second user")
 	}

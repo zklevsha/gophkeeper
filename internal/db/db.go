@@ -3,7 +3,6 @@ package db
 import (
 	"context"
 	"fmt"
-	"os"
 
 	"github.com/jackc/pgx/v4"
 	"github.com/jackc/pgx/v4/pgxpool"
@@ -13,7 +12,6 @@ import (
 
 // Connector encapsulates DB communication logic
 type Connector struct {
-	Ctx         context.Context
 	Pool        *pgxpool.Pool
 	DSN         string
 	initialized bool
@@ -28,8 +26,9 @@ func (c *Connector) checkInit() error {
 }
 
 // Init connects to DB and initilizes connection pool
-func (c *Connector) Init() error {
-	p, err := pgxpool.Connect(c.Ctx, c.DSN)
+func (c *Connector) Init(ctx context.Context) error {
+
+	p, err := pgxpool.Connect(ctx, c.DSN)
 	if err != nil {
 		return fmt.Errorf("unable to connect to database: %v", err)
 	}
@@ -47,13 +46,13 @@ func (c *Connector) Close() {
 }
 
 // Register adds user to database and returns new user`s id
-func (c *Connector) Register(user client.User) (int64, error) {
+func (c *Connector) Register(ctx context.Context, user client.User) (int64, error) {
 	err := c.checkInit()
 	if err != nil {
 		return -1, err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -62,7 +61,7 @@ func (c *Connector) Register(user client.User) (int64, error) {
 	// Check if user don`t exists
 	var counter int
 	sql := `SELECT COUNT(id) FROM users WHERE email=$1;`
-	err = conn.QueryRow(c.Ctx, sql, user.Email).Scan(&counter)
+	err = conn.QueryRow(ctx, sql, user.Email).Scan(&counter)
 	if err != nil {
 		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
@@ -75,77 +74,21 @@ func (c *Connector) Register(user client.User) (int64, error) {
 	sql = `INSERT INTO users (email, password)
 		   VALUES($1, $2)
 		   RETURNING id;`
-	err = conn.QueryRow(c.Ctx, sql, user.Email, user.Password).Scan(&id)
+	err = conn.QueryRow(ctx, sql, user.Email, user.Password).Scan(&id)
 	if err != nil {
 		return -1, fmt.Errorf("failed to create user id DB: %s", err.Error())
 	}
 	return id, nil
 }
 
-// CreateTables creates all project tables and populates it`s with data`
-// This function mainly used in tests
-func (c *Connector) CreateTables() error {
-	conn, err := c.Pool.Acquire(c.Ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %s", err.Error())
-	}
-	defer conn.Release()
-
-	// Recreating schema
-	schemaPath := "../../sql/schema.sql"
-	schemaSQL, err := os.ReadFile(schemaPath)
-	if err != nil {
-		return fmt.Errorf("cant read schema.sql: %s", err.Error())
-	}
-	_, err = conn.Exec(c.Ctx, string(schemaSQL))
-	if err != nil {
-		return fmt.Errorf("cant create db schema: %s", err.Error())
-	}
-
-	// Inserting data
-	dataPath := "../../sql/data.sql"
-	dataSQL, err := os.ReadFile(dataPath)
-	if err != nil {
-		return fmt.Errorf("cant read schema.sql: %s", err.Error())
-	}
-	_, err = conn.Exec(c.Ctx, string(dataSQL))
-	if err != nil {
-		return fmt.Errorf("cant create db schema: %s", err.Error())
-	}
-
-	return nil
-}
-
-// DropTables drops all project`s tables.
-// This function mainly used in tests.
-func (c *Connector) DropTables() error {
-	conn, err := c.Pool.Acquire(c.Ctx)
-	if err != nil {
-		return fmt.Errorf("failed to acquire connection: %s", err.Error())
-	}
-	defer conn.Release()
-
-	dropPath := "../../sql/drop.sql"
-	dropSQL, err := os.ReadFile(dropPath)
-	if err != nil {
-		return fmt.Errorf("cant read schema.sql: %s", err.Error())
-	}
-	_, err = conn.Exec(c.Ctx, string(dropSQL))
-	if err != nil {
-		return fmt.Errorf("cant create db schema: %s", err.Error())
-	}
-
-	return nil
-}
-
 // GetUser searches for user by email
-func (c *Connector) GetUser(email string) (client.User, error) {
+func (c *Connector) GetUser(ctx context.Context, email string) (client.User, error) {
 	err := c.checkInit()
 	if err != nil {
 		return client.User{}, err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return client.User{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -153,7 +96,7 @@ func (c *Connector) GetUser(email string) (client.User, error) {
 
 	var user client.User
 	usersSQL := `SELECT id, email, password FROM users WHERE email=$1`
-	row := conn.QueryRow(c.Ctx, usersSQL, email)
+	row := conn.QueryRow(ctx, usersSQL, email)
 
 	switch err := row.Scan(&user.ID, &user.Email, &user.Password); err {
 	case pgx.ErrNoRows:
@@ -167,13 +110,13 @@ func (c *Connector) GetUser(email string) (client.User, error) {
 }
 
 // PrivateAdd adds private data in database for specific userID
-func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
+func (c *Connector) PrivateAdd(ctx context.Context, userID int64, pdata Pdata) (int64, error) {
 	err := c.checkInit()
 	if err != nil {
 		return -1, err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return -1, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -184,7 +127,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 	sql := `SELECT id
 		    FROM private_types
 			WHERE name=$1;`
-	row := conn.QueryRow(c.Ctx, sql, pdata.Type)
+	row := conn.QueryRow(ctx, sql, pdata.Type)
 	err = row.Scan(&typeID)
 	if err != nil {
 		return -1, fmt.Errorf("cant get private_type id %s", err.Error())
@@ -195,7 +138,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 	sql = `SELECT COUNT(id)
 		   FROM private_data
 		   WHERE user_id=$1 AND name=$2;`
-	err = conn.QueryRow(c.Ctx, sql, userID, pdata.Name).Scan(&counter)
+	err = conn.QueryRow(ctx, sql, userID, pdata.Name).Scan(&counter)
 	if err != nil {
 		return -1, fmt.Errorf("failed to query users table: %s", err.Error())
 	}
@@ -207,7 +150,7 @@ func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 	sql = `INSERT INTO private_data (name, user_id, type_id, khash_base64, data_base64)
 		   VALUES($1, $2, $3, $4, $5)
 		   RETURNING id;`
-	err = conn.QueryRow(c.Ctx, sql,
+	err = conn.QueryRow(ctx, sql,
 		pdata.Name, userID, typeID, pdata.KeyHash, pdata.PrivateData).Scan(&id)
 	if err != nil {
 		return -1, fmt.Errorf("failed to insert data to db: %s", err.Error())
@@ -217,14 +160,14 @@ func (c *Connector) PrivateAdd(userID int64, pdata Pdata) (int64, error) {
 }
 
 // PrivateGet retrives private data from database
-func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
+func (c *Connector) PrivateGet(ctx context.Context, userID int64, pdataID int64) (Pdata, error) {
 
 	err := c.checkInit()
 	if err != nil {
 		return Pdata{}, err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return Pdata{}, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -236,7 +179,7 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
 			ON a.type_id=b.id
 			WHERE a.id=$1 AND a.user_id=$2;`
 
-	row := conn.QueryRow(c.Ctx, sql, pdataID, userID)
+	row := conn.QueryRow(ctx, sql, pdataID, userID)
 	var pdata = Pdata{}
 
 	switch err = row.Scan(&pdata.ID, &pdata.Name, &pdata.Type, &pdata.KeyHash, &pdata.PrivateData); err {
@@ -251,13 +194,13 @@ func (c *Connector) PrivateGet(userID int64, pdataID int64) (Pdata, error) {
 }
 
 // PrivateUpdate updates private data in database
-func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
+func (c *Connector) PrivateUpdate(ctx context.Context, userID int64, pdata Pdata) error {
 	err := c.checkInit()
 	if err != nil {
 		return err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -267,7 +210,7 @@ func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
 	sql := `UPDATE private_data
 			SET name = $1, khash_base64 = $2, data_base64 = $3
 			WHERE id = $4 AND user_id = $5`
-	res, err := conn.Exec(c.Ctx, sql, pdata.Name, pdata.KeyHash,
+	res, err := conn.Exec(ctx, sql, pdata.Name, pdata.KeyHash,
 		pdata.PrivateData, pdata.ID, userID)
 	if err != nil {
 		return fmt.Errorf("failed to insert data to db: %s", err.Error())
@@ -283,13 +226,13 @@ func (c *Connector) PrivateUpdate(userID int64, pdata Pdata) error {
 }
 
 // PrivateList returns list of user`s private entries
-func (c *Connector) PrivateList(userID int64, ptype string) ([]PdataEntry, error) {
+func (c *Connector) PrivateList(ctx context.Context, userID int64, ptype string) ([]PdataEntry, error) {
 	err := c.checkInit()
 	if err != nil {
 		return nil, err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -301,7 +244,7 @@ func (c *Connector) PrivateList(userID int64, ptype string) ([]PdataEntry, error
 			ON a.type_id=b.id
 			WHERE a.user_id=$1 AND b.name=$2
 			ORDER BY a.name`
-	rows, err := conn.Query(c.Ctx, sql, userID, ptype)
+	rows, err := conn.Query(ctx, sql, userID, ptype)
 	if err != nil {
 		return nil, fmt.Errorf("db query error: %s", err.Error())
 	}
@@ -323,14 +266,14 @@ func (c *Connector) PrivateList(userID int64, ptype string) ([]PdataEntry, error
 }
 
 // PrivateDelete deletes private data from database
-func (c *Connector) PrivateDelete(userID int64, pdataID int64) error {
+func (c *Connector) PrivateDelete(ctx context.Context, userID int64, pdataID int64) error {
 
 	err := c.checkInit()
 	if err != nil {
 		return err
 	}
 
-	conn, err := c.Pool.Acquire(c.Ctx)
+	conn, err := c.Pool.Acquire(ctx)
 	if err != nil {
 		return fmt.Errorf("failed to acquire connection: %s", err.Error())
 	}
@@ -339,7 +282,7 @@ func (c *Connector) PrivateDelete(userID int64, pdataID int64) error {
 	sql := `DELETE FROM private_data
 			WHERE id=$1 AND user_id=$2`
 
-	res, err := conn.Exec(c.Ctx, sql, pdataID, userID)
+	res, err := conn.Exec(ctx, sql, pdataID, userID)
 	if err != nil {
 		return fmt.Errorf("query error: %s", err.Error())
 	}

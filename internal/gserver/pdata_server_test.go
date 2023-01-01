@@ -3,6 +3,7 @@ package gserver
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/client"
 	"github.com/zklevsha/gophkeeper/internal/pb"
@@ -30,12 +31,13 @@ func getTokenCtx(ctx context.Context, user *pb.User, s testServer) (context.Cont
 }
 
 func TestGetUserId(t *testing.T) {
-	server := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	server := setUp(ctx)
 	defer tearDown(server)
 
 	var want int64 = 1
 	testUser := pb.User{Email: "vasya@test.ru", Password: "secret"}
-	ctx := context.Background()
 
 	ctx, err := getTokenCtx(ctx, &testUser, server)
 	if err != nil {
@@ -54,10 +56,11 @@ func TestGetUserId(t *testing.T) {
 }
 
 func TestPdata(t *testing.T) {
-	server := setUp()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(time.Second*60))
+	defer cancel()
+	server := setUp(ctx)
 	defer tearDown(server)
 	testUser := pb.User{Email: "vasya@test.ru", Password: "secret"}
-	ctx := context.Background()
 
 	ctx, err := getTokenCtx(ctx, &testUser, server)
 	if err != nil {
