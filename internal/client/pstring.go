@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
@@ -25,9 +26,22 @@ func pstringCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	}
 
 	// parsing input
-	name := getInput("entry name:", notEmpty, false)
-	string := getInput("string:", notEmpty, false)
-	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
+	name, err := getInput("entry name:", notEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	string, err := getInput("string:", notEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	tagsRaw, err := getInput(`metainfo: {"key":"value",...}`, isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	tags, err := getTags(tagsRaw)
 	if err != nil {
 		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
 		return
@@ -42,7 +56,9 @@ func pstringCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	}
 
 	// sending pdata to server
-	resp, err := gclient.Pdata.AddPdata(ctx, &pb.AddPdataRequest{Pdata: pdata})
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.AddPdata(ctxChild, &pb.AddPdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("ERROR: cannot send pdata to server: %s\n", err.Error())
 		return
@@ -74,7 +90,11 @@ func pstringGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// parsing input
-	pname := inputSelect("Pstring name: ", pnames)
+	pname, err := inputSelect("Pstring name: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
 	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
@@ -107,7 +127,9 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	}
 
 	// Getting current pstring
-	entries, err := listPnames(ctx, gclient, "pstring")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "pstring")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pstring entries: %s", err.Error())
 	}
@@ -120,9 +142,15 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("Pstring to update: ", pnames)
+	pname, err := inputSelect("Pstring to update: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
-	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	getResp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -135,21 +163,32 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	pstring := cleaned.(Pstring)
 
 	// Parsing input
-	nameNew := getInput(fmt.Sprintf("Name [%s]:", pstring.Name), any, false)
+	nameNew, err := getInput(fmt.Sprintf("Name [%s]:", pstring.Name), any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if nameNew == "" {
 		nameNew = pstring.Name
 	}
-	stringNew := getInput(fmt.Sprintf("String [%s]:", pstring.String), any, false)
+	stringNew, err := getInput(fmt.Sprintf("String [%s]:", pstring.String), any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if stringNew == "" {
 		stringNew = pstring.String
 	}
-
 	tagsJSON, err := json.Marshal(pstring.Tags)
 	if err != nil {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
+	tagsStr, err := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -174,7 +213,9 @@ func pstringUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	pdataNew.ID = getResp.Pdata.ID
 
 	// Sending pdata to server
-	updateResp, err := gclient.Pdata.UpdatePdata(ctx, &pb.UpdatePdataRequest{Pdata: pdataNew})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	updateResp, err := gclient.Pdata.UpdatePdata(ctxChild, &pb.UpdatePdataRequest{Pdata: pdataNew})
 	if err != nil {
 		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
@@ -196,7 +237,9 @@ func pstringDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 	}
 
 	// getting list of available pnames
-	entries, err := listPnames(ctx, gclient, "pstring")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "pstring")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pstring entries: %s", err.Error())
 		return
@@ -210,12 +253,19 @@ func pstringDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) 
 		pnames = append(pnames, pname)
 	}
 
-	pname := inputSelect("pstring name: ", pnames)
+	pname, err := inputSelect("pstring name: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
 		log.Println("Canceled")
 		return
 	}
-	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.DeletePdata(ctxChild, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())
 		return

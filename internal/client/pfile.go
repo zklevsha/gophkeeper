@@ -43,8 +43,17 @@ func pfileAdd(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// reading client`s input and loading file
-	pfilePath := inputSelect("pfile to send", pfiles)
-	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
+	pfilePath, err := inputSelect("pfile to send", pfiles)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	tagsRaw, err := getInput(`metainfo: {"key":"value",...}`, isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	tags, err := getTags(tagsRaw)
 	if err != nil {
 		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
 		return
@@ -63,7 +72,9 @@ func pfileAdd(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("cant convert pfile to pdata: %s", err.Error())
 		return
 	}
-	_, err = gclient.Pdata.AddPdata(ctx, &pb.AddPdataRequest{Pdata: pdata})
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.AddPdata(ctxChild, &pb.AddPdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("cannot send pfile to server: %s", err.Error())
 		return
@@ -72,7 +83,7 @@ func pfileAdd(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	log.Println("pfile was added")
 }
 
-// pfile retrrives user`s private file from server
+// pfile retrives user`s private file from server
 func pfileGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	err := reqCheck(mstorage)
 	if err != nil {
@@ -81,7 +92,9 @@ func pfileGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of existing pfile entries
-	entries, err := listPnames(ctx, gclient, "pfile")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "pfile")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pfile entries: %s", err.Error())
 		return
@@ -96,11 +109,17 @@ func pfileGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// parsing input
-	pname := inputSelect("Pfile name ", pnames)
+	pname, err := inputSelect("Pfile name ", pnames)
+	if err != nil {
+		log.Printf("ERROR: input parsing failed: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
 
 	// getting pdata
-	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -147,7 +166,9 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting current pfile
-	entries, err := listPnames(ctx, gclient, "pfile")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "pfile")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pfile entries: %s", err.Error())
 	}
@@ -159,9 +180,14 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("Pstring to update: ", pnames)
+	pname, err := inputSelect("Pstring to update: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+	}
 	pdataID := entries[pname]
-	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	getResp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -191,7 +217,11 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
+	tagsStr, err := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s\n", err.Error())
+		return
+	}
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -207,7 +237,11 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	var data []byte
 	var pfileName string
 	pfiles = append(pfiles, "dont change pfile")
-	pfilePath := inputSelect("new pfile", pfiles)
+	pfilePath, err := inputSelect("new pfile", pfiles)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s\n", err.Error())
+		return
+	}
 	if pfilePath == "dont change pfile" {
 		data = pfileOld.Data
 		pfileName = pfileOld.Name
@@ -228,7 +262,9 @@ func pfileUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		return
 	}
 	pdata.ID = getResp.Pdata.ID
-	_, err = gclient.Pdata.UpdatePdata(ctx, &pb.UpdatePdataRequest{Pdata: pdata})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.UpdatePdata(ctxChild, &pb.UpdatePdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("cannot send pfile to server: %s", err.Error())
 		return
@@ -266,7 +302,9 @@ func pfileDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of available pnames
-	entries, err := listPnames(ctx, gclient, "pfile")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "pfile")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing pfile entries: %s", err.Error())
 		return
@@ -280,12 +318,18 @@ func pfileDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("pstring name: ", pnames)
+	pname, err := inputSelect("pstring name: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s\n", err.Error())
+		return
+	}
 	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
 		log.Println("Canceled")
 		return
 	}
-	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.DeletePdata(ctxChild, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())
 		return

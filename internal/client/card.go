@@ -32,12 +32,37 @@ func cardCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// parsing input
-	name := getInput("name:", notEmpty, false)
-	number := getInput("number(XXXX XXXX XXXX XXXX):", isCardNumber, false)
-	holder := getInput("holder(JOHN DOE):", isCardHolder, false)
-	expire := getInput("expire(MM/YY):", isCardExire, false)
-	cvc := getInput("CVV/CVC(XXX):", isCardCVC, false)
-	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
+	name, err  := getInput("name:", notEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	number, err := getInput("number(XXXX XXXX XXXX XXXX):", isCardNumber, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	holder, err := getInput("holder(JOHN DOE):", isCardHolder, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	expire, err := getInput("expire(MM/YY):", isCardExire, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	cvc, err := getInput("CVV/CVC(XXX):", isCardCVC, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	tagsRaw, err := getInput(`metainfo: {"key":"value",...}`, isTags, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
+	tags, err := getTags(tagsRaw)
 	if err != nil {
 		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
 		return
@@ -91,7 +116,11 @@ func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// Getting pdata from server
-	pname := inputSelect("Card name", pnames)
+	pname, err := inputSelect("Card name", pnames)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
 	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
 		defer cancel()
@@ -144,7 +173,11 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("Card name", pnames)
+	pname, err := inputSelect("Card name", pnames)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
 	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
 	defer cancel()
@@ -163,35 +196,55 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	// getting new data from input
 	var newCard Card
 	// name
-	name := getInput(fmt.Sprintf("Name [%s]:", oldCard.Name), any, false)
+	name, err := getInput(fmt.Sprintf("Name [%s]:", oldCard.Name), any, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	if name == "" {
 		newCard.Name = oldCard.Name
 	} else {
 		newCard.Name = name
 	}
 	// card number
-	number := getInput(fmt.Sprintf("Number [%s]:", oldCard.Number), isCardNumberOrEmpty, false)
+	number, err := getInput(fmt.Sprintf("Number [%s]:", oldCard.Number), isCardNumberOrEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	if number == "" {
 		newCard.Number = oldCard.Number
 	} else {
 		newCard.Number = number
 	}
 	// card holder
-	holder := getInput(fmt.Sprintf("Holder [%s]:", oldCard.Holder), isCardHolderOrEmpty, false)
+	holder, err := getInput(fmt.Sprintf("Holder [%s]:", oldCard.Holder), isCardHolderOrEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	if holder == "" {
 		newCard.Holder = oldCard.Holder
 	} else {
 		newCard.Holder = holder
 	}
 	// card expiration date
-	expire := getInput(fmt.Sprintf("Expire [%s]:", oldCard.Expire), isCardExpireOrEmpty, false)
+	expire, err := getInput(fmt.Sprintf("Expire [%s]:", oldCard.Expire), isCardExpireOrEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	if expire == "" {
 		newCard.Expire = oldCard.Expire
 	} else {
 		newCard.Expire = expire
 	}
 	// card CVV/CVC number
-	cvc := getInput(fmt.Sprintf("CVV/CVC [%s]:", oldCard.CVC), isCardCVCorEmpty, false)
+	cvc, err := getInput(fmt.Sprintf("CVV/CVC [%s]:", oldCard.CVC), isCardCVCorEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	if cvc == "" {
 		newCard.CVC = oldCard.CVC
 	} else {
@@ -203,7 +256,11 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
+	tagsStr, err := getInput(fmt.Sprintf("new tags[%s]", tagsJSON), isTags, false)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 	var tagsNew map[string]string
 	if tagsStr == "" {
 		tagsNew = oldCard.Tags
@@ -259,7 +316,11 @@ func cardDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		pnames = append(pnames, pname)
 	}
 
-	pname := inputSelect("Card name: ", pnames)
+	pname, err := inputSelect("Card name: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: failed to parse input: %s", err.Error())
+		return
+	}
 
 	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
 		log.Println("Canceled")

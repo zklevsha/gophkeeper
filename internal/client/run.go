@@ -18,7 +18,11 @@ func Run(ctx context.Context, gclient *Gclient, mstorage *MemStorage) {
 
 	// infinite loop for interactive cli
 	for {
-		command := getInput("command: ", notEmpty, false)
+		command, err := getInput("command: ", notEmpty, false)
+		if err != nil {
+			log.Printf("ERROR: failed to parse input: %s", err.Error())
+			continue
+		}
 		switch command {
 		// Authentication
 		case "register":
@@ -113,12 +117,13 @@ func setup(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	log.Printf("Welcome to gophkeeper. Let`s set you up")
 
 	// Register/Login
-	answer := inputSelect("Do you want to register or log in?",
+	answer, err := inputSelect("Do you want to register or log in?",
 		[]string{"register", "login"})
+	if err != nil {
+		log.Fatalf("ERROR: %s", err.Error())
+	}
 	if answer == "register" {
 		log.Println("Registering:")
-		ctx, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
-		defer cancel()
 		err := register(ctx, gclient)
 		if err != nil {
 			log.Fatalf("ERROR: %s", err.Error())
@@ -126,9 +131,7 @@ func setup(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Println("Register succsessful.")
 	}
 	log.Println("Logging in:")
-	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(reqTimeout))
-		defer cancel()
-	err := login(ctx, gclient, mstorage)
+	err = login(ctx, gclient, mstorage)
 	if err != nil {
 		log.Fatalf("ERROR: %s", err.Error())
 	}

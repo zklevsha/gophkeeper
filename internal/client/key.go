@@ -57,7 +57,10 @@ func keyLoad(kpath string, mstorage *MemStorage) error {
 			}
 			return nil
 		}
-		kpath = inputSelect("Select key to load", keys)
+		kpath, err = inputSelect("Select key to load", keys)
+		if err != nil {
+			return fmt.Errorf("input failure: %s", err.Error())
+		}
 	}
 	key, err := kload(kpath)
 	if err != nil {

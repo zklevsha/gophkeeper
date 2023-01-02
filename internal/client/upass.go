@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
@@ -29,21 +30,42 @@ func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 
 	// parsing input
 	var password string
-	pname := getInput("entry name:", notEmpty, false)
-	username := getInput("username:", notEmpty, false)
-	passwordOne := getInput("password (set empty for automatic generation):",
+	pname, err := getInput("entry name:", notEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	username, err := getInput("username:", notEmpty, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	passwordOne, err := getInput("password (set empty for automatic generation):",
 		any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if passwordOne == "" {
 		password = GetRandomSrt(32)
 	} else {
-		passwordTwo := getInput("confirm password:", notEmpty, false)
+		passwordTwo, err := getInput("confirm password:", notEmpty, false)
+		if err != nil {
+			log.Printf("ERROR: parsing failed: %s", err.Error())
+			return
+		}
 		if passwordOne != passwordTwo {
 			log.Println("ERROR: password mismatch")
 			return
 		}
 		password = passwordOne
 	}
-	tags, err := getTags(getInput(`metainfo: {"key":"value",...}`, isTags, false))
+	tagsRaw, err  := getInput(`metainfo: {"key":"value",...}`, isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
+	tags, err := getTags(tagsRaw)
 	if err != nil {
 		log.Printf("ERROR: cant parse tags: %s\n", err.Error())
 		return
@@ -61,7 +83,9 @@ func upassCreate(ctx context.Context,  mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// sending data to server
-	resp, err := gclient.Pdata.AddPdata(ctx, &pb.AddPdataRequest{Pdata: pdata})
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.AddPdata(ctxChild, &pb.AddPdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
@@ -79,7 +103,9 @@ func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of existing upass entries
-	entries, err := listPnames(ctx, gclient, "upass")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 		return
@@ -94,9 +120,17 @@ func upassGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// parsing input
-	pname := inputSelect("Upass name ", pnames)
+	pname, err := inputSelect("Upass name ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
-	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+
+	// sending request to server
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -126,7 +160,9 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// Getting current upass
-	entries, err := listPnames(ctx, gclient, "upass")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 	}
@@ -134,14 +170,19 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("You dont have any upass entries")
 		return
 	}
-
 	var pnames []string
 	for pname := range entries {
 		pnames = append(pnames, pname)
 	}
-	pname := inputSelect("Pname to update: ", pnames)
+	pname, err := inputSelect("Pname to update: ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	pdataID := entries[pname]
-	getResp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	getResp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -154,19 +195,35 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	up := cleaned.(UPass)
 
 	// Parsing input
-	nameNew := getInput(fmt.Sprintf("Name [%s]:", up.Name), any, false)
+	nameNew, err := getInput(fmt.Sprintf("Name [%s]:", up.Name), any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if nameNew == "" {
 		nameNew = up.Name
 	}
-	usernameNew := getInput(fmt.Sprintf("Username [%s]:", up.Username), any, false)
+	usernameNew, err := getInput(fmt.Sprintf("Username [%s]:", up.Username), any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if usernameNew == "" {
 		usernameNew = up.Username
 	}
-	passwordNew := getInput(fmt.Sprintf("Password [%s]:", up.Password), any, false)
+	passwordNew, err := getInput(fmt.Sprintf("Password [%s]:", up.Password), any, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if passwordNew == "" {
 		passwordNew = up.Password
 	} else {
-		passwordNewConfirm := getInput("confirm password:", notEmpty, false)
+		passwordNewConfirm, err := getInput("confirm password:", notEmpty, false)
+		if err != nil {
+			log.Printf("ERROR: parsing failed: %s", err.Error())
+			return
+		}
 		if passwordNew != passwordNewConfirm {
 			log.Println("ERROR: password mismatch")
 			return
@@ -177,7 +234,11 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Printf("ERROR: cant parse old tags: %s\n", err.Error())
 		return
 	}
-	tagsStr := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
+	tagsStr, err := getInput(fmt.Sprintf("New tags [%s]", tagsJSON), isTags, false)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	var tagsNew map[string]string
 	if tagsStr != "" {
 		tagsNew, err = getTags(tagsStr)
@@ -202,7 +263,9 @@ func upassUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	pdataNew.ID = getResp.Pdata.ID
 
 	// Sending pdata to server
-	updateResp, err := gclient.Pdata.UpdatePdata(ctx, &pb.UpdatePdataRequest{Pdata: pdataNew})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	updateResp, err := gclient.Pdata.UpdatePdata(ctxChild, &pb.UpdatePdataRequest{Pdata: pdataNew})
 	if err != nil {
 		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
@@ -223,7 +286,9 @@ func upassDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of available pnames
-	entries, err := listPnames(ctx, gclient, "upass")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "upass")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 		return
@@ -237,12 +302,18 @@ func upassDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		pnames = append(pnames, pname)
 	}
 
-	pname := inputSelect("Upass name ", pnames)
+	pname, err := inputSelect("Upass name ", pnames)
+	if err != nil {
+		log.Printf("ERROR: parsing failed: %s", err.Error())
+		return
+	}
 	if !getYN(fmt.Sprintf("do you want delete %s?", pname)) {
 		log.Println("Canceled")
 		return
 	}
-	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.DeletePdata(ctxChild, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete pdata: %s", err.Error())
 		return

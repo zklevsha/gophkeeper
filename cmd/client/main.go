@@ -55,8 +55,7 @@ func main() {
 	}()
 
 	printStartupInfo()
-	client.Run(ctx, &gclient, &mstorage)
-	log.Printf("yo")
+	go client.Run(ctx, &gclient, &mstorage)
 	wg.Wait()
 	log.Println("Client was shutdown cleanelly")
 }

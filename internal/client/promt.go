@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"os"
 
 	"github.com/manifoldco/promptui"
 )
@@ -24,19 +23,16 @@ func getYN(label string) bool {
 	return result == "Yes"
 }
 
-func inputSelect(label string, items []string) string {
+func inputSelect(label string, items []string) (string, error) {
 	prompt := promptui.Select{
 		Label: label,
 		Items: items,
 	}
 	_, result, err := prompt.Run()
-	if err != nil {
-		return ""
-	}
-	return result
+	return result, err
 }
 
-func getInput(label string, validator fn, mask bool) string {
+func getInput(label string, validator fn, mask bool) (string, error) {
 
 	templates := &promptui.PromptTemplates{
 		Prompt:  "{{ . }} ",
@@ -56,11 +52,7 @@ func getInput(label string, validator fn, mask bool) string {
 	}
 
 	result, err := prompt.Run()
-	if err != nil {
-		fmt.Printf("Prompt failed %v\n", err)
-		os.Exit(1)
-	}
-	return result
+	return result, err
 }
 
 func getTags(input string) (map[string]string, error) {
