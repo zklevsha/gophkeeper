@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
@@ -53,7 +54,9 @@ func cardCreate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// sending data to server
-	resp, err := gclient.Pdata.AddPdata(ctx, &pb.AddPdataRequest{Pdata: pdata})
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.AddPdata(ctxChild, &pb.AddPdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
@@ -71,7 +74,9 @@ func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of existing card entries
-	entries, err := listPnames(ctx, gclient, "card")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "card")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 		return
@@ -88,7 +93,9 @@ func cardGet(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	// Getting pdata from server
 	pname := inputSelect("Card name", pnames)
 	pdataID := entries[pname]
-	resp, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+		defer cancel()
+	resp, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant retrive pdata from server: %s\n", err.Error())
 		return
@@ -121,7 +128,9 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of existing card entries
-	entries, err := listPnames(ctx, gclient, "card")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "card")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing card entries: %s", err.Error())
 	}
@@ -137,7 +146,9 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 	pname := inputSelect("Card name", pnames)
 	pdataID := entries[pname]
-	getPdataResponse, err := gclient.Pdata.GetPdata(ctx, &pb.GetPdataRequest{PdataID: pdataID})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	getPdataResponse, err := gclient.Pdata.GetPdata(ctxChild, &pb.GetPdataRequest{PdataID: pdataID})
 	if err != nil {
 		log.Printf("ERROR: cant get card entry: %s\n", err.Error())
 		return
@@ -180,7 +191,7 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		newCard.Expire = expire
 	}
 	// card CVV/CVC number
-	cvc := getInput(fmt.Sprintf("CVV/CVC [%s]:)", oldCard.CVC), isCardCVCorEmpty, false)
+	cvc := getInput(fmt.Sprintf("CVV/CVC [%s]:", oldCard.CVC), isCardCVCorEmpty, false)
 	if cvc == "" {
 		newCard.CVC = oldCard.CVC
 	} else {
@@ -213,7 +224,9 @@ func cardUpdate(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	pdata.ID = pdataID
 
 	// sending data to server
-	resp, err := gclient.Pdata.UpdatePdata(ctx, &pb.UpdatePdataRequest{Pdata: pdata})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	resp, err := gclient.Pdata.UpdatePdata(ctxChild, &pb.UpdatePdataRequest{Pdata: pdata})
 	if err != nil {
 		log.Printf("ERROR: cant send message to server: %s\n", err.Error())
 		return
@@ -230,7 +243,9 @@ func cardDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 	}
 
 	// getting list of available pnames
-	entries, err := listPnames(ctx, gclient, "card")
+	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	entries, err := listPnames(ctxChild, gclient, "card")
 	if err != nil {
 		log.Printf("ERROR: cant retrive list of existing upass entries: %s", err.Error())
 		return
@@ -250,7 +265,9 @@ func cardDelete(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Println("Canceled")
 		return
 	}
-	_, err = gclient.Pdata.DeletePdata(ctx, &pb.DeletePdataRequest{PdataID: entries[pname]})
+	ctxChild, cancel = context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
+	_, err = gclient.Pdata.DeletePdata(ctxChild, &pb.DeletePdataRequest{PdataID: entries[pname]})
 	if err != nil {
 		log.Printf("ERROR: cant delete card: %s", err.Error())
 		return

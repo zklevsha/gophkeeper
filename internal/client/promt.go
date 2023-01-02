@@ -31,7 +31,7 @@ func inputSelect(label string, items []string) string {
 	}
 	_, result, err := prompt.Run()
 	if err != nil {
-		log.Fatalf("Prompt failed %v\n", err)
+		return ""
 	}
 	return result
 }

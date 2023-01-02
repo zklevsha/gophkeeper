@@ -4,16 +4,20 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/zklevsha/gophkeeper/internal/pb"
 )
 
 func login(ctx context.Context, gclient *Gclient,
+
 	mstorage *MemStorage) error {
 	email := getInput("email:", isEmail, false)
 	password := getInput("password:", notEmpty, true)
 
 	user := pb.User{Email: email, Password: password}
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+		defer cancel()
 	resp, err := gclient.Auth.GetToken(ctx, &pb.GetTokenRequest{User: &user})
 	if err != nil {
 		return fmt.Errorf("cant get token: %s", err.Error())
@@ -30,6 +34,8 @@ func register(ctx context.Context, gclient *Gclient) error {
 		return errors.New("password mismatch")
 	}
 	user := pb.User{Email: email, Password: password}
+	ctx, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+	defer cancel()
 	_, err := gclient.Auth.Register(ctx, &pb.RegisterRequest{User: &user})
 	if err != nil {
 		return fmt.Errorf("cant register %s", err.Error())

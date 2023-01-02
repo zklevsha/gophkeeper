@@ -5,13 +5,15 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 )
 
+const reqTimeout = time.Second * 30
+
 // Run starts client interactive promt
-func Run(gclient *Gclient, mstorage *MemStorage) {
+func Run(ctx context.Context, gclient *Gclient, mstorage *MemStorage) {
 
 	// setting up gk for user
-	ctx := context.Background()
 	setup(ctx, mstorage, gclient)
 
 	// infinite loop for interactive cli
@@ -115,6 +117,8 @@ func setup(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		[]string{"register", "login"})
 	if answer == "register" {
 		log.Println("Registering:")
+		ctx, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
+		defer cancel()
 		err := register(ctx, gclient)
 		if err != nil {
 			log.Fatalf("ERROR: %s", err.Error())
@@ -122,6 +126,8 @@ func setup(ctx context.Context, mstorage *MemStorage, gclient *Gclient) {
 		log.Println("Register succsessful.")
 	}
 	log.Println("Logging in:")
+	ctx, cancel := context.WithTimeout(context.Background(), time.Duration(reqTimeout))
+		defer cancel()
 	err := login(ctx, gclient, mstorage)
 	if err != nil {
 		log.Fatalf("ERROR: %s", err.Error())
