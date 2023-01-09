@@ -1,9 +1,0 @@
-Как поднять TLS для сервера
-https://dev.to/techschoolguru/how-to-secure-grpc-connection-with-ssl-tls-in-go-4ph
-
-
-metadata для добавления данных в контекст
-https://medium.com/@harlow/grpc-context-for-client-server-metadata-91cec8729424
-
-gwt interceptors
-https://dev.to/techschoolguru/use-grpc-interceptor-for-authorization-with-jwt-1c5h

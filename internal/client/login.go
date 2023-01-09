@@ -22,7 +22,7 @@ func login(ctx context.Context, gclient *Gclient,
 	}
 	user := pb.User{Email: email, Password: password}
 	ctxChild, cancel := context.WithTimeout(ctx, time.Duration(reqTimeout))
-		defer cancel()
+	defer cancel()
 	resp, err := gclient.Auth.GetToken(ctxChild, &pb.GetTokenRequest{User: &user})
 	if err != nil {
 		return fmt.Errorf("cant get token: %s", err.Error())

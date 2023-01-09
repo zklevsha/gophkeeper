@@ -17,7 +17,7 @@ var buildDate string = "N/A"
 var buildCommit string = "N/A"
 
 func printStartupInfo() {
-	log.Printf("build version: %s, build date: %s, build commit: %s",
+	log.Printf("Gophkeeper build info: version: %s, build date: %s, build commit: %s",
 		buildVersion, buildDate, buildCommit)
 }
 
@@ -26,9 +26,9 @@ func main() {
 	// removing timestamps from the output
 	log.SetFlags(0)
 
-
 	// parent context from which all request context will be derived
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGINT, syscall.SIGTERM, syscall.SIGQUIT)
+	context.Background()
 	defer cancel()
 
 	// parsing config and preparing gRPC client
@@ -49,11 +49,12 @@ func main() {
 	wg.Add(1)
 	go func() {
 		s := <-sigCh
-		log.Printf("got signal %v, attempting graceful shutdown", s)
+		log.Printf("Got signal %v, attempting graceful shutdown", s)
 		cancel()
 		wg.Done()
 	}()
 
+	// Starting client
 	printStartupInfo()
 	go client.Run(ctx, &gclient, &mstorage)
 	wg.Wait()
