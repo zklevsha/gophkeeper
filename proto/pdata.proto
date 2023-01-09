@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+option go_package = "./pb";
+
+message Pdata {
+  string pname = 1;
+  string ptype = 2;
+  bytes pdata = 3;
+  bytes keyHash = 4;
+  int64 ID = 5;
+}
+
+message PdataEntry {
+  string name = 1;
+  int64 ID = 2;
+}
+
+// Add
+message AddPdataRequest {Pdata pdata = 1;}
+message AddPdataResponse {string response = 1;}
+// Get
+message GetPdataRequest {int64 pdataID = 1;}
+message GetPdataResponse {Pdata pdata = 1;}
+// Update
+message UpdatePdataRequest {Pdata pdata = 1;}
+message UpdatePdataResponse {string response = 1;}
+// List
+message ListPdataRequest {string ptype = 1;}
+message ListPdataResponse {repeated PdataEntry pdataEtnry =1;}
+// Delete
+message DeletePdataRequest {int64 pdataID = 1;}
+message DeletePdataResponse {string response = 1;}
+
+service PrivateData {
+  rpc AddPdata(AddPdataRequest) returns (AddPdataResponse) {}
+  rpc GetPdata(GetPdataRequest) returns (GetPdataResponse) {}
+  rpc UpdatePdata(UpdatePdataRequest) returns (UpdatePdataResponse) {}
+  rpc ListPdata(ListPdataRequest) returns (ListPdataResponse) {}
+  rpc DeletePdata(DeletePdataRequest) returns (DeletePdataResponse) {}
+}
+

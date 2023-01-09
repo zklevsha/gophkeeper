@@ -1,0 +1,11 @@
+v1.0.0 2022-12-27:
+    First version of project
+
+v1.0.1 2022-12-27:
+    Added build info
+
+v1.0.2 2023-01-02
+    Reworked ctx logic
+
+v1.0.3  2023-01-09
+    - Small fixes

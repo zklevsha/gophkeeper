@@ -1,0 +1,23 @@
+name:  static-check
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+
+  statictest:
+    runs-on: ubuntu-latest
+    container: golang:1.19
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: installing linters
+        run: |
+          make lint_install
+      - name: Run statictests
+        run: |
+          make lint
