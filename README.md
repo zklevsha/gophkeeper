@@ -147,7 +147,7 @@ cmd/server/server -d postgres://gophkeeper:gophkeeper@localhost:5432/gophkeeper 
 
 4. Установить инструмент миграции БД
     ```bash
-    [kzhukov@fedora gophkeeper]$ make  make migrate_install
+    [kzhukov@fedora gophkeeper]$ make migrate_install
     curl -L https://github.com/golang-migrate/migrate/releases/download/v4.15.2/migrate.linux-arm64.tar.gz | tar xvz -C  /home/kzhukov/go/bin
     % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
                                     Dload  Upload   Total   Spent    Left  Speed
